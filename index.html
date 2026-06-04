@@ -926,12 +926,13 @@ const MASTER_DB_ID  = "1c4c6bb7-cbfb-4a4b-bce8-461f7b28ee2e";
 const HISTORY_DB_ID = "8177402a-8eb0-4c18-b66b-5bed66dcb3b7";
 const NOTION_BASE   = "https://app.notion.com/p/";
 
-// 後方互換（旧コードが参照している箇所向け）
+// 後方互換
 const DB_ID   = MASTER_DB_ID;
 const HIST_ID = HISTORY_DB_ID;
 
-// ▼ GASをデプロイしたらここに貼る（空白のままではClaude MCP経由で動作）
-const GATEWAY_URL = "";
+// ▼ GASデプロイURLをここに貼る（必須）
+// 例: "https://script.google.com/macros/s/AKfy.../exec"
+const GATEWAY_URL = "https://script.google.com/macros/s/AKfycbxbE4vlfExJG8byEu6VL90ZlE4EQZPZYtItowy1QbM/exec";
 
 // ═══════ STATE ═══════
 let items = [], currentFilter = "all", currentStepFilter = "all", editingItem = null;
