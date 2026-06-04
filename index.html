@@ -922,8 +922,8 @@ select option{background:var(--s2)}
 
 <script>
 // ═══════ CONFIG ═══════
-const MASTER_DB_ID  = "1c4c6bb7-cbfb-4a4b-bce8-461f7b28ee2e";
-const HISTORY_DB_ID = "8177402a-8eb0-4c18-b66b-5bed66dcb3b7";
+const MASTER_DB_ID  = "79684b18-5aa9-4ed4-9795-96188be61ca1";
+const HISTORY_DB_ID = "6ace0570-3ff0-4963-bfb4-9bafaf14304e";
 const NOTION_BASE   = "https://app.notion.com/p/";
 
 // 後方互換（旧コードが参照している箇所向け）
@@ -957,48 +957,63 @@ const STEP_COLOR = {"仕込み・糖化":"#e8c020","煮沸・ホップ添加":"#
 //  GASはリクエストを透過するだけ。
 // ═══════════════════════════════════════════════════════════
 
-// --- Notion API 呼び出し（GAS gateway 経由）---
+// ══════════════════════════════════════════════════════════════
+//  Notion API レイヤー
+//  ─────────────────────────────────────────────────────────────
+//  GATEWAY_URL 設定済み → GAS経由（action形式でPOST）
+//  未設定        → Claude MCP fallback（開発・デモ用）
+//
+//  【GAS通信プロトコル ver3.0】
+//  すべてのリクエストは POST { action, ...params } で統一。
+//  GAS は受け取ったものをそのまま Notion API に流して返すだけ。
+// ══════════════════════════════════════════════════════════════
+
+// --- GAS経由 汎用中継（relay action）---
+async function _gasRelay(method, path, body) {
+  const r = await fetch(GATEWAY_URL, {
+    method : "POST",
+    headers: { "Content-Type": "application/json" },
+    body   : JSON.stringify({ action: "relay", method, path, body })
+  });
+  if (!r.ok) throw new Error("GAS relay HTTP " + r.status);
+  return r.json();
+}
+
+// --- GAS経由 全件クエリ（queryAll action）---
+//     GASがページネーションを吸収して results[] を返してくれる
+async function _gasQueryAll(dbId, filter) {
+  const r = await fetch(GATEWAY_URL, {
+    method : "POST",
+    headers: { "Content-Type": "application/json" },
+    body   : JSON.stringify({ action: "queryAll", dbId, filter: filter||null })
+  });
+  if (!r.ok) throw new Error("GAS queryAll HTTP " + r.status);
+  const d = await r.json();
+  if (!d.ok) throw new Error("GAS queryAll error: " + (d.error||"unknown"));
+  return d.results || [];
+}
+
+// --- 公開API（アプリ内から呼ぶ）---
 async function notionPost(path, body) {
   if (!GATEWAY_URL) return _claudeFallback("POST", path, body);
-  const r = await fetch(GATEWAY_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ path, method: "POST", body })
-  });
-  return r.json();
+  return _gasRelay("POST", path, body);
 }
 
 async function notionPatch(path, body) {
   if (!GATEWAY_URL) return _claudeFallback("PATCH", path, body);
-  const r = await fetch(GATEWAY_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ path, method: "PATCH", body })
-  });
-  return r.json();
+  return _gasRelay("PATCH", path, body);
 }
 
 async function notionGet(path) {
   if (!GATEWAY_URL) return _claudeFallback("GET", path, null);
-  const url = GATEWAY_URL + "?path=" + encodeURIComponent(path);
-  const r   = await fetch(url);
-  return r.json();
+  return _gasRelay("GET", path, null);
 }
 
 // ページネーション付き全件クエリ
+// GATEWAY_URL設定済みならGASに全件処理を委譲（1リクエストで完結）
 async function notionQueryAll(dbId, filter) {
-  if (!GATEWAY_URL) return _claudeQueryAll(dbId);
-  const pages = [];
-  let cursor  = null;
-  do {
-    const body = { page_size: 100 };
-    if (cursor) body.start_cursor = cursor;
-    if (filter) body.filter = filter;
-    const res = await notionPost(`/v1/databases/${dbId}/query`, body);
-    (res.results || []).forEach(p => pages.push(p));
-    cursor = res.has_more ? res.next_cursor : null;
-  } while (cursor);
-  return pages;
+  if (GATEWAY_URL) return _gasQueryAll(dbId, filter);
+  return _claudeQueryAll(dbId);
 }
 
 // Notionプロパティ → JS値 抽出
@@ -1091,21 +1106,54 @@ body: ${body ? JSON.stringify(body) : "なし"}
 }
 
 async function _claudeQueryAll(dbId) {
+  // MCPは「自然言語でNotionを操作するエージェント」
+  // → Notion APIのraw JSONを返してもらうのではなく
+  //   アプリが必要なフィールドを明示的に指示する
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method:"POST", headers:{"Content-Type":"application/json"},
     body: JSON.stringify({
-      model: MODEL, max_tokens: 8000,
-      system: "Notionのデータ操作エージェント。必ずJSON配列のみ返す。前置き・コード囲み不要。",
+      model: MODEL, max_tokens: 12000,
+      system: `あなたはNotionデータ取得エージェントです。
+ツールでNotionDBの全ページを取得し、以下のJSON配列のみを返してください。
+前置き・説明・コードブロック記号は一切不要です。純粋なJSON配列だけ出力してください。
+[
+  {
+    "id": "ページID（ハイフンなし32文字）",
+    "properties": {
+      "検査項目名": {"title": [{"plain_text": "値"}]},
+      "工程": {"select": {"name": "値"}},
+      "分類": {"select": {"name": "値"}},
+      "合格基準_テキスト": {"rich_text": [{"plain_text": "値"}]},
+      "合格基準_下限": {"rich_text": [{"plain_text": "値"}]},
+      "合格基準_上限": {"rich_text": [{"plain_text": "値"}]},
+      "警告値_下限": {"rich_text": [{"plain_text": "値"}]},
+      "警告値_上限": {"rich_text": [{"plain_text": "値"}]},
+      "NGライン_下限": {"rich_text": [{"plain_text": "値"}]},
+      "NGライン_上限": {"rich_text": [{"plain_text": "値"}]},
+      "単位": {"select": {"name": "値"}},
+      "測定頻度": {"rich_text": [{"plain_text": "値"}]},
+      "測定方法": {"rich_text": [{"plain_text": "値"}]},
+      "NG時処置": {"rich_text": [{"plain_text": "値"}]},
+      "改定バージョン": {"rich_text": [{"plain_text": "値"}]},
+      "改定理由": {"rich_text": [{"plain_text": "値"}]}
+    }
+  }
+]`,
       messages: [{ role:"user", content:
-        `Notionのデータソース「collection://${dbId}」から全ページを取得し、
-[{"id":"pageId","properties":{...全プロパティ}}] の形式でJSON配列のみ返してください。`
-      }],
+        `データソース collection://${dbId} の全ページを取得し、上記のJSON配列形式で全件返してください。` }],
       mcp_servers: [{ type:"url", url:"https://mcp.notion.com/mcp", name:"notion" }]
     })
   });
-  const d = await r.json();
+  const d   = await r.json();
   const txt = (d.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("");
-  try { const s=txt.indexOf("["),e=txt.lastIndexOf("]"); return JSON.parse(txt.slice(s,e+1)); } catch{ return []; }
+  try {
+    const s = txt.indexOf("["), e = txt.lastIndexOf("]");
+    if (s < 0 || e < 0) throw new Error("JSON配列が見つかりません");
+    return JSON.parse(txt.slice(s, e+1));
+  } catch(err) {
+    console.error("_claudeQueryAll parse error:", err, txt.slice(0,300));
+    return [];
+  }
 }
 
 // 後方互換（旧 callClaude / callClaudeObj を使っている箇所向け）
