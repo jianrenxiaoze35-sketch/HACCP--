@@ -922,28 +922,201 @@ select option{background:var(--s2)}
 
 <script>
 // ═══════ CONFIG ═══════
-const DB_ID = "collection://79684b18-5aa9-4ed4-9795-96188be61ca1";
-const HIST_ID = "collection://6ace0570-3ff0-4963-bfb4-9bafaf14304e";
-const MODEL = "claude-sonnet-4-20250514";
-const NOTION_BASE = "https://app.notion.com/p/";
+const MASTER_DB_ID  = "1c4c6bb7-cbfb-4a4b-bce8-461f7b28ee2e";
+const HISTORY_DB_ID = "8177402a-8eb0-4c18-b66b-5bed66dcb3b7";
+const NOTION_BASE   = "https://app.notion.com/p/";
+
+// 後方互換（旧コードが参照している箇所向け）
+const DB_ID   = MASTER_DB_ID;
+const HIST_ID = HISTORY_DB_ID;
+
+// ▼ GASをデプロイしたらここに貼る（空白のままではClaude MCP経由で動作）
+const GATEWAY_URL = "";
 
 // ═══════ STATE ═══════
 let items = [], currentFilter = "all", currentStepFilter = "all", editingItem = null;
-const localNotes = {}; // pageUrl -> {procedure, checklist, memo}
+const localNotes = {};
 
 // ═══════ FLOW DATA ═══════
 const STEPS = ["仕込み・糖化","煮沸・ホップ添加","冷却・酵母接種","発酵管理","貯酒・濾過","缶充填・密封","出荷前最終検査"];
 const STEP_COLOR = {"仕込み・糖化":"#e8c020","煮沸・ホップ添加":"#e07020","冷却・酵母接種":"#3d7de8","発酵管理":"#8b5cf6","貯酒・濾過":"#24c97e","缶充填・密封":"#e04545","出荷前最終検査":"#535d7f"};
 
-// ═══════ CLAUDE API ═══════
+// ═══════════════════════════════════════════════════════════
+//  Notion 直接 API レイヤー
+//  ─────────────────────────────────────────────────────────
+//  GATEWAY_URL が設定されている → GAS経由でNotion APIを叩く
+//  未設定 → Claude MCP経由（開発・デモ用）
+//
+//  【GAS経由の通信フロー】
+//    アプリ  →  (fetch)  →  GAS doPost/doGet
+//    GAS     →  (UrlFetch) → Notion API
+//    Notion  →  (response) → GAS
+//    GAS     →  (JSON)  → アプリ
+//
+//  アプリは記録・ログ・履歴をすべて自分でNotionに書く。
+//  GASはリクエストを透過するだけ。
+// ═══════════════════════════════════════════════════════════
+
+// --- Notion API 呼び出し（GAS gateway 経由）---
+async function notionPost(path, body) {
+  if (!GATEWAY_URL) return _claudeFallback("POST", path, body);
+  const r = await fetch(GATEWAY_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path, method: "POST", body })
+  });
+  return r.json();
+}
+
+async function notionPatch(path, body) {
+  if (!GATEWAY_URL) return _claudeFallback("PATCH", path, body);
+  const r = await fetch(GATEWAY_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path, method: "PATCH", body })
+  });
+  return r.json();
+}
+
+async function notionGet(path) {
+  if (!GATEWAY_URL) return _claudeFallback("GET", path, null);
+  const url = GATEWAY_URL + "?path=" + encodeURIComponent(path);
+  const r   = await fetch(url);
+  return r.json();
+}
+
+// ページネーション付き全件クエリ
+async function notionQueryAll(dbId, filter) {
+  if (!GATEWAY_URL) return _claudeQueryAll(dbId);
+  const pages = [];
+  let cursor  = null;
+  do {
+    const body = { page_size: 100 };
+    if (cursor) body.start_cursor = cursor;
+    if (filter) body.filter = filter;
+    const res = await notionPost(`/v1/databases/${dbId}/query`, body);
+    (res.results || []).forEach(p => pages.push(p));
+    cursor = res.has_more ? res.next_cursor : null;
+  } while (cursor);
+  return pages;
+}
+
+// Notionプロパティ → JS値 抽出
+function nText(prop)    { if (!prop) return ""; return (prop.title||prop.rich_text||[]).map(t=>t.plain_text).join("").trim(); }
+function nSelect(prop)  { return prop?.select?.name || ""; }
+function nCheck(prop)   { return prop?.checkbox ?? false; }
+function nDate(prop)    { return prop?.date?.start || ""; }
+
+// Notionプロパティ組み立て（マスタDB用）
+function buildMasterProps(d, date) {
+  const rt = v => [{ text: { content: String(v||"") } }];
+  return {
+    "検査項目名":        { title:     rt(d.name)    },
+    "工程":              { select:   { name: d.step  }},
+    "分類":              { select:   { name: d.cls   }},
+    "合格基準_テキスト": { rich_text: rt(d.okText)  },
+    "合格基準_下限":     { rich_text: rt(d.okLo)    },
+    "合格基準_上限":     { rich_text: rt(d.okHi)    },
+    "警告値_下限":       { rich_text: rt(d.wLo)     },
+    "警告値_上限":       { rich_text: rt(d.wHi)     },
+    "NGライン_下限":     { rich_text: rt(d.ngLo)    },
+    "NGライン_上限":     { rich_text: rt(d.ngHi)    },
+    "単位":              { select:   { name: d.unit || "なし（定性）" }},
+    "測定頻度":          { rich_text: rt(d.freq)    },
+    "測定方法":          { rich_text: rt(d.method)  },
+    "NG時処置":          { rich_text: rt(d.action)  },
+    "備考":              { rich_text: rt(d.memo||"") },
+    "有効フラグ":        { checkbox:  true           },
+    "改定バージョン":    { rich_text: rt(d.ver)      },
+    "改定日":            { date:     { start: date } },
+    "改定理由":          { rich_text: rt(d.reason)   },
+  };
+}
+
+// 変更履歴DBへの書き込み（アプリが直接呼ぶ）
+async function writeHistory({ name, step, cls, field, before, after, reason, author, ver }) {
+  const rt  = v => [{ text: { content: String(v||"") } }];
+  const now = new Date().toISOString().split("T")[0];
+  const cid = "CHG-" + now.replace(/-/g,"") + "-" + Math.floor(Math.random()*900+100);
+  const props = {
+    "変更ID":        { title:    rt(cid)   },
+    "検査項目名":    { rich_text: rt(name) },
+    "工程":          { select:  { name: step || "仕込み・糖化" }},
+    "変更フィールド":{ rich_text: rt(field || "基準値更新") },
+    "変更前の値":    { rich_text: rt(before||"") },
+    "変更後の値":    { rich_text: rt(after ||"") },
+    "変更理由":      { rich_text: rt(reason||"更新") },
+    "変更者名":      { rich_text: rt(author||"—") },
+    "変更日時":      { date:     { start: now }},
+    "バージョン":    { rich_text: rt(ver||"v1.0") },
+    "承認状態":      { select:  { name: "未承認" }},
+  };
+  return notionPost("/v1/pages", { parent: { database_id: HISTORY_DB_ID }, properties: props });
+}
+
+// 承認ステータスの更新（アプリが直接呼ぶ）
+async function updateApproval(pageId, status, note) {
+  const rt = v => [{ text: { content: String(v||"") } }];
+  const props = {
+    "承認状態": { select: { name: status }},
+    "備考":     { rich_text: rt(note||"") },
+  };
+  return notionPatch(`/v1/pages/${pageId.replace(/-/g,"")}`, props);
+}
+
+// ═══════════════════════════════════════════
+//  フォールバック（GATEWAY_URL 未設定時）
+//  Claude MCP 経由で動作（デモ・開発用）
+// ═══════════════════════════════════════════
+const MODEL = "claude-sonnet-4-20250514";
+
+async function _claudeFallback(method, path, body) {
+  const prompt = `Notion API を呼び出してください。
+method: ${method}
+url: https://api.notion.com${path}
+body: ${body ? JSON.stringify(body) : "なし"}
+結果をJSONのみで返してください。`;
+  const r = await fetch("https://api.anthropic.com/v1/messages", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({
+      model: MODEL, max_tokens: 4000,
+      system: "Notion APIをMCPで呼び出し、結果のJSONのみ返す。",
+      messages: [{ role:"user", content: prompt }],
+      mcp_servers: [{ type:"url", url:"https://mcp.notion.com/mcp", name:"notion" }]
+    })
+  });
+  const d = await r.json();
+  const txt = (d.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("");
+  try { const s=txt.indexOf("{"),e=txt.lastIndexOf("}"); return JSON.parse(txt.slice(s,e+1)); } catch{ return {}; }
+}
+
+async function _claudeQueryAll(dbId) {
+  const r = await fetch("https://api.anthropic.com/v1/messages", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({
+      model: MODEL, max_tokens: 8000,
+      system: "Notionのデータ操作エージェント。必ずJSON配列のみ返す。前置き・コード囲み不要。",
+      messages: [{ role:"user", content:
+        `Notionのデータソース「collection://${dbId}」から全ページを取得し、
+[{"id":"pageId","properties":{...全プロパティ}}] の形式でJSON配列のみ返してください。`
+      }],
+      mcp_servers: [{ type:"url", url:"https://mcp.notion.com/mcp", name:"notion" }]
+    })
+  });
+  const d = await r.json();
+  const txt = (d.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("");
+  try { const s=txt.indexOf("["),e=txt.lastIndexOf("]"); return JSON.parse(txt.slice(s,e+1)); } catch{ return []; }
+}
+
+// 後方互換（旧 callClaude / callClaudeObj を使っている箇所向け）
 async function callClaude(prompt, max=5000) {
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method:"POST", headers:{"Content-Type":"application/json"},
     body: JSON.stringify({
       model: MODEL, max_tokens: max,
       system: "Notionのデータ操作エージェント。必ずJSON配列のみ返す。前置き・コード囲み不要。",
-      messages: [{role:"user", content: prompt}],
-      mcp_servers: [{type:"url", url:"https://mcp.notion.com/mcp", name:"notion"}]
+      messages: [{ role:"user", content: prompt }],
+      mcp_servers: [{ type:"url", url:"https://mcp.notion.com/mcp", name:"notion" }]
     })
   });
   const d = await r.json();
@@ -956,8 +1129,8 @@ async function callClaudeObj(prompt, max=2000) {
     body: JSON.stringify({
       model: MODEL, max_tokens: max,
       system: "NotionのMCPツールを使って操作する。成功したら {\"ok\":true} のみ返す。",
-      messages: [{role:"user", content: prompt}],
-      mcp_servers: [{type:"url", url:"https://mcp.notion.com/mcp", name:"notion"}]
+      messages: [{ role:"user", content: prompt }],
+      mcp_servers: [{ type:"url", url:"https://mcp.notion.com/mcp", name:"notion" }]
     })
   });
   const d = await r.json();
@@ -966,17 +1139,33 @@ async function callClaudeObj(prompt, max=2000) {
 
 // ═══════ LOAD ═══════
 async function loadItems() {
-  document.getElementById("listBody").innerHTML = `<div class="list-loading"><span class="spin"></span>Notionから読み込み中…</div>`;
+  document.getElementById("listBody").innerHTML =
+    `<div class="list-loading"><span class="spin"></span>Notionから読み込み中…</div>`;
   try {
-    const raw = await callClaude(`
-Notionのデータソース「${DB_ID}」から全ページを取得し、以下のJSON配列のみ返してください。
-[{"pageUrl":"...","name":"検査項目名","step":"工程","cls":"CCP/OP/Q",
-"okText":"合格基準_テキスト","okLo":"合格基準_下限","okHi":"合格基準_上限",
-"wLo":"警告値_下限","wHi":"警告値_上限","ngLo":"NGライン_下限","ngHi":"NGライン_上限",
-"unit":"単位","freq":"測定頻度","method":"測定方法","action":"NG時処置",
-"ver":"改定バージョン","reason":"改定理由"}]`, 8000);
-    const s = raw.indexOf("["), e = raw.lastIndexOf("]");
-    items = s>=0 && e>s ? JSON.parse(raw.slice(s,e+1)) : [];
+    // アプリが直接Notionから全件取得（GAS gateway 経由 or MCP fallback）
+    const pages = await notionQueryAll(MASTER_DB_ID);
+    items = pages.map(p => {
+      const pr = p.properties || {};
+      return {
+        pageUrl: p.id,
+        name:    nText(pr["検査項目名"]),
+        step:    nSelect(pr["工程"]),
+        cls:     nSelect(pr["分類"]),
+        okText:  nText(pr["合格基準_テキスト"]),
+        okLo:    nText(pr["合格基準_下限"]),
+        okHi:    nText(pr["合格基準_上限"]),
+        wLo:     nText(pr["警告値_下限"]),
+        wHi:     nText(pr["警告値_上限"]),
+        ngLo:    nText(pr["NGライン_下限"]),
+        ngHi:    nText(pr["NGライン_上限"]),
+        unit:    nSelect(pr["単位"]),
+        freq:    nText(pr["測定頻度"]),
+        method:  nText(pr["測定方法"]),
+        action:  nText(pr["NG時処置"]),
+        ver:     nText(pr["改定バージョン"]),
+        reason:  nText(pr["改定理由"]),
+      };
+    }).filter(i => i.name);
     setLed(true);
     updateSidebarCounts();
     renderList();
@@ -1246,19 +1435,40 @@ function toggleCk(idx, url) {
 async function saveNote(type, url) {
   if(!url) return;
   const val = document.getElementById("ed-"+type).value;
-  const ts = new Date().toLocaleString("ja-JP");
+  const ts  = new Date().toLocaleString("ja-JP");
   if(!localNotes[url]) localNotes[url]={};
-  localNotes[url][type] = val;
+  localNotes[url][type]    = val;
   localNotes[url][type+"Ts"] = "保存: "+ts;
   document.getElementById("ts-"+type).textContent = "保存: "+ts;
 
-  // Notionの備考フィールドに保存
   try {
-    const fieldName = type==="proc" ? "測定方法" : "備考";
-    await callClaudeObj(`Notionのページ「${url}」の「${fieldName}」フィールドを以下の内容で更新してください:\n${val}\n\n成功したら {"ok":true} を返してください。`);
+    // フィールドマッピング: 詳細手順→測定方法、備考→備考
+    const fieldKey = type === "proc" ? "測定方法" : "備考";
+    const rt = v => [{ text: { content: String(v||"") } }];
+    const pageId = url.replace(/-/g,"");
+
+    // アプリが直接Notionに書く（GASは透過するだけ）
+    await notionPatch(`/v1/pages/${pageId}`, {
+      [fieldKey]: { rich_text: rt(val) }
+    });
+
+    // 変更履歴もアプリが直接書く
+    if(editingItem) {
+      await writeHistory({
+        name:   editingItem.name,
+        step:   editingItem.step,
+        cls:    editingItem.cls,
+        field:  fieldKey,
+        before: "",
+        after:  val.slice(0,80) + (val.length>80?"…":""),
+        reason: "メモ更新",
+        author: "—",
+        ver:    editingItem.ver || "v1.0",
+      });
+    }
     toast("Notionに保存しました","ok");
   } catch(e) {
-    toast("Notion保存に失敗: "+e.message,"er");
+    toast("保存失敗: "+e.message,"er");
   }
 }
 
@@ -1300,57 +1510,70 @@ function openEditModal() {
 function closeModal() { document.getElementById("modal").classList.remove("on"); }
 
 async function saveItem() {
-  const btn = document.getElementById("modal-save-btn");
-  const name=document.getElementById("m-name").value.trim();
-  const step=document.getElementById("m-step").value;
-  const cls=document.getElementById("m-cls").value;
-  if(!name||!step||!cls){toast("名前・工程・分類は必須です","er");return;}
+  const btn    = document.getElementById("modal-save-btn");
+  const name   = document.getElementById("m-name").value.trim();
+  const step   = document.getElementById("m-step").value;
+  const cls    = document.getElementById("m-cls").value;
+  if (!name||!step||!cls){ toast("名前・工程・分類は必須です","er"); return; }
 
   btn.disabled=true; btn.textContent="保存中…";
   document.getElementById("savingOver").classList.add("on");
 
-  const now=new Date().toISOString().split("T")[0];
-  const isEdit=!!editingItem;
-  const ver=document.getElementById("m-ver").value||"v1.0";
-  const reason=document.getElementById("m-reason").value||"更新";
-  const author=document.getElementById("m-author").value||"—";
+  const now    = new Date().toISOString().split("T")[0];
+  const isEdit = !!editingItem;
+  const ver    = document.getElementById("m-ver").value||"v1.0";
+  const reason = document.getElementById("m-reason").value||"更新";
+  const author = document.getElementById("m-author").value||"—";
+
+  const data = {
+    name,   step,   cls,
+    okText: document.getElementById("m-ok").value,
+    okLo:   document.getElementById("m-ok-lo").value,
+    okHi:   document.getElementById("m-ok-hi").value,
+    wLo:    document.getElementById("m-w-lo").value,
+    wHi:    document.getElementById("m-w-hi").value,
+    ngLo:   document.getElementById("m-ng-lo").value,
+    ngHi:   document.getElementById("m-ng-hi").value,
+    unit:   document.getElementById("m-unit").value,
+    freq:   document.getElementById("m-freq").value,
+    method: document.getElementById("m-method").value,
+    action: document.getElementById("m-action").value,
+    memo:   "",
+    ver, reason,
+  };
 
   try {
-    const prompt = isEdit
-      ? `Notionのページ「${editingItem.pageUrl}」を以下で更新:
-検査項目名="${name}",工程="${step}",分類="${cls}",
-合格基準_テキスト="${document.getElementById("m-ok").value}",
-合格基準_下限="${document.getElementById("m-ok-lo").value}",合格基準_上限="${document.getElementById("m-ok-hi").value}",
-警告値_下限="${document.getElementById("m-w-lo").value}",警告値_上限="${document.getElementById("m-w-hi").value}",
-NGライン_下限="${document.getElementById("m-ng-lo").value}",NGライン_上限="${document.getElementById("m-ng-hi").value}",
-単位="${document.getElementById("m-unit").value}",測定頻度="${document.getElementById("m-freq").value}",
-測定方法="${document.getElementById("m-method").value}",NG時処置="${document.getElementById("m-action").value}",
-改定バージョン="${ver}",改定日="${now}",改定理由="${reason}",有効フラグ=true。
-成功したら {"ok":true}。`
-      : `Notionのデータソース「${DB_ID}」に新規ページを作成:
-検査項目名="${name}",工程="${step}",分類="${cls}",
-合格基準_テキスト="${document.getElementById("m-ok").value}",
-合格基準_下限="${document.getElementById("m-ok-lo").value}",合格基準_上限="${document.getElementById("m-ok-hi").value}",
-警告値_下限="${document.getElementById("m-w-lo").value}",警告値_上限="${document.getElementById("m-w-hi").value}",
-NGライン_下限="${document.getElementById("m-ng-lo").value}",NGライン_上限="${document.getElementById("m-ng-hi").value}",
-単位="${document.getElementById("m-unit").value}",測定頻度="${document.getElementById("m-freq").value}",
-測定方法="${document.getElementById("m-method").value}",NG時処置="${document.getElementById("m-action").value}",
-改定バージョン="${ver}",改定日="${now}",改定理由="${reason}",有効フラグ=true。
-成功したら {"ok":true}。`;
-    await callClaudeObj(prompt);
+    const props = buildMasterProps(data, now);
+    let pageId;
 
-    // 変更履歴
-    const cid=`CHG-${now.replace(/-/g,"")}-${Math.floor(Math.random()*900+100)}`;
-    await callClaudeObj(`Notionのデータソース「${HIST_ID}」に変更履歴を記録:
-変更ID="${cid}",検査項目名="${name}",工程="${step}",
-変更フィールド="${isEdit?"基準値更新":"新規作成"}",
-変更前の値="${isEdit?editingItem.okText:""}",変更後の値="${document.getElementById("m-ok").value||document.getElementById("m-ok-lo").value}",
-変更理由="${reason}",変更者名="${author}",変更日時="${now}",バージョン="${ver}",承認状態="未承認"。
-成功したら {"ok":true}。`);
+    if (isEdit && editingItem.pageUrl) {
+      // ── 既存ページを更新（アプリ → GAS → Notion）
+      const id = editingItem.pageUrl.replace(/-/g,"");
+      await notionPatch(`/v1/pages/${id}`, props);
+      pageId = editingItem.pageUrl;
+    } else {
+      // ── 新規ページを作成（アプリ → GAS → Notion）
+      const res = await notionPost("/v1/pages", {
+        parent: { database_id: MASTER_DB_ID },
+        properties: props
+      });
+      pageId = res.id;
+    }
 
-    toast(isEdit?"✓ 更新しました":"✓ 追加しました","ok");
+    // ── 変更履歴をアプリが直接Notionに書く（GAS経由）
+    //    GASは透過するだけ。判断・加工は一切しない。
+    await writeHistory({
+      name, step, cls,
+      field:  isEdit ? "基準値更新" : "新規作成",
+      before: isEdit ? (editingItem.okText||editingItem.okLo||"—") : "",
+      after:  data.okText || data.okLo || "—",
+      reason, author, ver,
+    });
+
+    toast(isEdit ? "✓ 更新しました" : "✓ 追加しました", "ok");
     closeModal();
     await loadItems();
+
   } catch(e) {
     toast("保存エラー: "+e.message,"er");
   } finally {
