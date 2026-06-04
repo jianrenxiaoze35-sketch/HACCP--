@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="HACCP 検査基準ナレッジベース - ビール製造工程管理システム">
+<meta name="theme-color" content="#08090d">
+<title>HACCP 検査基準 ナレッジベース</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&family=Playfair+Display:ital,wght@0,600;1,500&display=swap" rel="stylesheet">
+<style>
+/* ═══════ TOKENS ═══════ */
+:root{
+  --ink:#08090d; --s0:#0e1018; --s1:#13161f; --s2:#191d28; --s3:#1f2433;
+  --s4:#252b3a; --s5:#2d3448;
+  --rim:#2e3550; --rim2:#3d4768; --rim3:#4f5e84;
+  --tx:#d4daf0; --tx2:#8a94b8; --tx3:#535d7f; --tx4:#333d5a;
+  --amber:#e8a020; --amber2:#f5b840; --amber-l:rgba(232,160,32,.12); --amber-b:rgba(232,160,32,.32);
+  --red:#e04545;   --red-l:rgba(224,69,69,.11);   --red-b:rgba(224,69,69,.3);
+  --blue:#3d7de8;  --blue-l:rgba(61,125,232,.11);  --blue-b:rgba(61,125,232,.28);
+  --pur:#8b5cf6;   --pur-l:rgba(139,92,246,.1);    --pur-b:rgba(139,92,246,.28);
+  --gr:#24c97e;    --gr-l:rgba(36,201,126,.1);      --gr-b:rgba(36,201,126,.28);
+  --cy:#1ab8d4;
+  --r:10px; --r2:7px; --r3:4px; --r4:2px;
+  --ff:'Noto Sans JP',sans-serif;
+  --fm:'JetBrains Mono',monospace;
+  --fp:'Playfair Display',serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{background:var(--ink);color:var(--tx);font-family:var(--ff);font-size:13px;display:flex;flex-direction:column}
+
+/* ── SCANLINE overlay ── */
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.04) 2px,rgba(0,0,0,.04) 4px);pointer-events:none;z-index:999}
+
+/* ── TOPBAR ── */
+.topbar{
+  display:flex;align-items:center;gap:14px;
+  padding:10px 20px;
+  background:linear-gradient(180deg,var(--s1) 0%,var(--s0) 100%);
+  border-bottom:1px solid var(--rim);
+  flex-shrink:0;
+  position:relative;
+}
+.topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--amber),transparent);opacity:.4}
+.tb-badge{font-family:var(--fm);font-size:9px;color:var(--amber);background:var(--amber-l);border:1px solid var(--amber-b);border-radius:var(--r4);padding:2px 8px;letter-spacing:.1em;text-transform:uppercase}
+.tb-title{font-family:var(--fp);font-size:16px;color:#fff;letter-spacing:.02em}
+.tb-sub{font-size:10px;color:var(--tx3);font-family:var(--fm);margin-top:1px}
+.tb-spacer{flex:1}
+.tb-led{display:flex;align-items:center;gap:5px;font-family:var(--fm);font-size:9px;color:var(--tx3)}
+.led{width:6px;height:6px;border-radius:50%;background:var(--tx4)}
+.led.on{background:var(--gr);box-shadow:0 0 5px var(--gr)}
+.tb-tabs{display:flex;gap:1px;background:var(--rim);border-radius:var(--r2);padding:2px;overflow:hidden}
+.tb-tab{padding:5px 14px;font-size:11px;cursor:pointer;border-radius:5px;color:var(--tx2);transition:all .15s;white-space:nowrap;font-weight:500}
+.tb-tab.on{background:var(--s3);color:var(--tx);box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.tb-tab:hover:not(.on){color:var(--tx)}
+
+/* ── LAYOUT ── */
+.body{display:flex;flex:1;overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sb{
+  width:220px;flex-shrink:0;
+  background:linear-gradient(180deg,var(--s1) 0%,var(--s0) 100%);
+  border-right:1px solid var(--rim);
+  overflow-y:auto;
+  display:flex;flex-direction:column;
+  scrollbar-width:thin;scrollbar-color:var(--s5) transparent;
+}
+.sb-section{padding:10px 0 4px}
+.sb-hd{padding:6px 16px 3px;font-family:var(--fm);font-size:9px;color:var(--tx4);letter-spacing:.1em;text-transform:uppercase}
+.sb-item{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 16px;cursor:pointer;
+  color:var(--tx2);font-size:12px;
+  border-left:2px solid transparent;
+  transition:all .12s;position:relative;
+}
+.sb-item:hover{background:var(--s2);color:var(--tx);border-left-color:var(--rim2)}
+.sb-item.on{background:var(--s3);color:var(--amber);border-left-color:var(--amber)}
+.sb-item.on::after{content:'';position:absolute;right:0;top:50%;transform:translateY(-50%);width:1px;height:60%;background:var(--amber);opacity:.5}
+.sb-pip{width:6px;height:6px;border-radius:50%;flex-shrink:0;border:1px solid currentColor;opacity:.6}
+.sb-item.on .sb-pip{background:var(--amber);border-color:var(--amber);opacity:1;box-shadow:0 0 4px var(--amber)}
+.sb-cnt{margin-left:auto;font-family:var(--fm);font-size:9px;color:var(--tx4);background:var(--s4);border:1px solid var(--rim);border-radius:10px;padding:1px 7px}
+.sb-divider{height:1px;margin:6px 16px;background:var(--rim)}
+.sb-notion-link{
+  display:flex;align-items:center;gap:7px;
+  margin:6px 12px;padding:7px 10px;
+  border:1px solid var(--blue-b);border-radius:var(--r2);
+  font-size:10px;color:var(--blue);background:var(--blue-l);
+  text-decoration:none;transition:opacity .15s;cursor:pointer
+}
+.sb-notion-link:hover{opacity:.75}
+
+/* ── MAIN AREA ── */
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;scrollbar-width:thin;scrollbar-color:var(--s5) transparent}
+.panel{display:none;flex:1;flex-direction:column}
+.panel.on{display:flex}
+
+/* ── GLOSSARY PANEL ── */
+.gloss-wrap{padding:20px 24px;flex:1}
+.gloss-hero{
+  background:linear-gradient(135deg,var(--s2) 0%,var(--s1) 100%);
+  border:1px solid var(--rim);border-radius:var(--r);
+  padding:20px 24px;margin-bottom:20px;position:relative;overflow:hidden
+}
+.gloss-hero::before{
+  content:'HACCP';position:absolute;right:-10px;top:-16px;
+  font-family:var(--fp);font-size:80px;color:var(--s4);
+  pointer-events:none;user-select:none;line-height:1
+}
+.gloss-hero-label{font-family:var(--fm);font-size:9px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px}
+.gloss-hero-title{font-family:var(--fp);font-size:22px;color:#fff;margin-bottom:8px}
+.gloss-hero-body{font-size:12.5px;color:var(--tx2);line-height:1.9;max-width:680px}
+
+.gloss-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-bottom:20px}
+.gloss-card{
+  background:var(--s1);border:1px solid var(--rim);border-radius:var(--r);
+  overflow:hidden;transition:border-color .15s
+}
+.gloss-card:hover{border-color:var(--rim2)}
+.gloss-card-head{display:flex;align-items:center;gap:10px;padding:12px 14px 10px;border-bottom:1px solid var(--rim)}
+.gloss-card-badge{
+  font-family:var(--fm);font-size:11px;font-weight:500;
+  padding:3px 10px;border-radius:var(--r3);
+  border:1px solid;min-width:40px;text-align:center
+}
+.b-ccp{color:var(--red);border-color:var(--red-b);background:var(--red-l)}
+.b-op{color:var(--blue);border-color:var(--blue-b);background:var(--blue-l)}
+.b-q{color:var(--pur);border-color:var(--pur-b);background:var(--pur-l)}
+.b-ok{color:var(--gr);border-color:var(--gr-b);background:var(--gr-l)}
+.b-warn{color:var(--amber);border-color:var(--amber-b);background:var(--amber-l)}
+.b-ng{color:var(--red);border-color:var(--red-b);background:var(--red-l)}
+.gloss-card-title{font-size:14px;font-weight:600;color:#fff}
+.gloss-card-subtitle{font-size:10px;color:var(--tx3);margin-top:1px;font-family:var(--fm)}
+.gloss-card-body{padding:12px 14px}
+.gloss-card-desc{font-size:12.5px;color:var(--tx2);line-height:1.8;margin-bottom:10px}
+.gloss-card-examples{display:flex;flex-direction:column;gap:4px}
+.ex-row{display:flex;align-items:flex-start;gap:8px;font-size:11.5px;color:var(--tx2)}
+.ex-dot{width:4px;height:4px;border-radius:50%;background:var(--amber);flex-shrink:0;margin-top:5px}
+
+.gloss-principle{background:var(--s1);border:1px solid var(--rim);border-radius:var(--r);padding:16px 20px;margin-bottom:12px}
+.gloss-principle-title{font-size:13px;font-weight:600;color:var(--tx);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.principle-grid{display:flex;flex-direction:column;gap:5px}
+.p-row{display:flex;gap:10px;align-items:flex-start;padding:6px 8px;border-radius:var(--r3);background:var(--s2);font-size:12px}
+.p-num{font-family:var(--fm);font-size:10px;color:var(--amber);background:var(--amber-l);border:1px solid var(--amber-b);border-radius:999px;min-width:22px;height:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.p-text{color:var(--tx2);line-height:1.6}
+.p-text strong{color:var(--tx)}
+
+.term-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.term-card{background:var(--s1);border:1px solid var(--rim);border-radius:var(--r2);padding:11px 13px}
+.term-word{font-family:var(--fm);font-size:11px;color:var(--cy);margin-bottom:5px;letter-spacing:.03em}
+.term-ja{font-size:13px;font-weight:600;color:var(--tx);margin-bottom:5px}
+.term-desc{font-size:11.5px;color:var(--tx2);line-height:1.7}
+
+/* ── LIST PANEL ── */
+.list-toolbar{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 20px;
+  background:var(--s0);border-bottom:1px solid var(--rim);
+  flex-shrink:0;flex-wrap:wrap
+}
+.lt-title{font-size:14px;font-weight:600;flex:1}
+.lt-sub{font-size:10px;color:var(--tx3);margin-top:1px}
+.search-wrap{position:relative}
+.search-wrap input{
+  background:var(--s2);border:1px solid var(--rim);border-radius:var(--r2);
+  color:var(--tx);padding:6px 10px 6px 28px;font-size:12px;
+  font-family:var(--ff);outline:none;width:180px;transition:border-color .15s
+}
+.search-wrap input:focus{border-color:var(--amber)}
+.search-icon{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--tx3);font-size:12px;pointer-events:none}
+.filter-row{display:flex;gap:5px}
+.filter-btn{
+  padding:5px 12px;border-radius:var(--r2);border:1px solid var(--rim);
+  background:var(--s2);color:var(--tx2);font-size:11px;cursor:pointer;
+  transition:all .12s;font-family:var(--ff);white-space:nowrap
+}
+.filter-btn:hover{color:var(--tx);border-color:var(--rim2)}
+.filter-btn.on{background:var(--amber-l);border-color:var(--amber-b);color:var(--amber)}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:var(--r2);border:1px solid var(--rim2);background:var(--s3);color:var(--tx);font-size:11.5px;cursor:pointer;transition:all .15s;font-family:var(--ff);white-space:nowrap}
+.btn:hover{border-color:var(--amber);color:var(--amber)}
+.btn-p{background:var(--amber-l);border-color:var(--amber-b);color:var(--amber)}
+.btn-p:hover{background:rgba(232,160,32,.2)}
+.btn-g{background:var(--gr-l);border-color:var(--gr-b);color:var(--gr)}
+
+.list-body{flex:1;overflow-y:auto;padding:16px 20px}
+.item-row{
+  display:grid;align-items:center;
+  grid-template-columns:auto 1fr auto auto auto auto auto;
+  gap:10px;
+  padding:9px 14px;
+  background:var(--s1);border:1px solid var(--rim);border-radius:var(--r2);
+  margin-bottom:5px;cursor:pointer;transition:all .12s;
+}
+.item-row:hover{background:var(--s2);border-color:var(--rim2);transform:translateX(2px)}
+.item-row.ccp-row{border-left:3px solid var(--red)}
+.item-row.op-row{border-left:3px solid var(--blue)}
+.item-row.q-row{border-left:3px solid var(--pur)}
+.item-cls{font-family:var(--fm);font-size:9px;font-weight:600;padding:2px 6px;border-radius:var(--r4);border:1px solid;min-width:32px;text-align:center}
+.item-name{font-size:12.5px;font-weight:500;color:var(--tx)}
+.item-step{font-size:10px;color:var(--tx3);font-family:var(--fm);white-space:nowrap}
+.item-ok{font-family:var(--fm);font-size:10px;color:var(--gr);background:var(--gr-l);border:1px solid var(--gr-b);border-radius:var(--r4);padding:2px 7px;white-space:nowrap}
+.item-ng{font-family:var(--fm);font-size:10px;color:var(--red);background:var(--red-l);border:1px solid var(--red-b);border-radius:var(--r4);padding:2px 7px;white-space:nowrap}
+.item-unit{font-family:var(--fm);font-size:10px;color:var(--tx3);white-space:nowrap}
+.item-arrow{color:var(--tx4);font-size:12px}
+
+.empty-state{text-align:center;padding:40px;color:var(--tx3);font-size:12px}
+.list-loading{text-align:center;padding:30px;color:var(--tx3);font-family:var(--fm);font-size:11px}
+
+/* ── DETAIL PANEL (page view) ── */
+.detail-wrap{flex:1;overflow-y:auto;padding:0}
+.detail-head{
+  padding:20px 24px 16px;
+  background:linear-gradient(180deg,var(--s1) 0%,var(--s0) 100%);
+  border-bottom:1px solid var(--rim);
+  position:sticky;top:0;z-index:10;
+}
+.dh-back{display:inline-flex;align-items:center;gap:6px;color:var(--tx3);font-size:11px;cursor:pointer;margin-bottom:10px;padding:4px 8px;border-radius:var(--r3);transition:all .12s;font-family:var(--fm)}
+.dh-back:hover{color:var(--tx);background:var(--s2)}
+.dh-top{display:flex;align-items:flex-start;gap:12px}
+.dh-title{font-family:var(--fp);font-size:22px;color:#fff;flex:1;line-height:1.3}
+.dh-meta{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+.dh-badge{font-size:10px;padding:2px 8px;border-radius:999px;font-family:var(--fm);font-weight:500}
+.dh-actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
+
+.detail-body{padding:20px 24px}
+.d-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.d-card{background:var(--s1);border:1px solid var(--rim);border-radius:var(--r);overflow:hidden}
+.d-card-head{padding:9px 13px;background:var(--s2);border-bottom:1px solid var(--rim);font-size:10px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.07em;font-family:var(--fm);display:flex;align-items:center;gap:6px}
+.d-card-body{padding:12px 14px}
+.d-val-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.d-label{font-size:10.5px;color:var(--tx3);min-width:80px;flex-shrink:0}
+.d-val{font-family:var(--fm);font-size:12px}
+.d-val.ok{color:var(--gr);background:var(--gr-l);border:1px solid var(--gr-b);border-radius:var(--r4);padding:2px 8px}
+.d-val.warn{color:var(--amber);background:var(--amber-l);border:1px solid var(--amber-b);border-radius:var(--r4);padding:2px 8px}
+.d-val.ng{color:var(--red);background:var(--red-l);border:1px solid var(--red-b);border-radius:var(--r4);padding:2px 8px}
+.d-val.plain{color:var(--tx2)}
+
+/* FLOW DIAGRAM */
+.flow-section{margin-bottom:20px}
+.flow-sec-title{font-size:11px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.07em;font-family:var(--fm);margin-bottom:10px;display:flex;align-items:center;gap:7px}
+.flow-sec-title::after{content:'';flex:1;height:1px;background:var(--rim)}
+.flow-diagram{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding-bottom:4px}
+.flow-step{
+  display:flex;flex-direction:column;
+  min-width:140px;
+  background:var(--s1);border:1px solid var(--rim);
+  border-radius:var(--r2);padding:11px 12px;
+  position:relative;transition:border-color .15s;flex-shrink:0
+}
+.flow-step.active{border-color:var(--amber);background:var(--s2)}
+.flow-step.active::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--amber);border-radius:var(--r2) var(--r2) 0 0}
+.flow-step-num{font-family:var(--fm);font-size:9px;color:var(--tx4);margin-bottom:4px}
+.flow-step-name{font-size:11.5px;font-weight:500;color:var(--tx);margin-bottom:6px;line-height:1.3}
+.flow-step-items{display:flex;flex-direction:column;gap:2px}
+.flow-step-item{font-size:10px;color:var(--tx3);display:flex;align-items:center;gap:4px}
+.flow-step-item.highlight{color:var(--amber);font-weight:500}
+.flow-arr{display:flex;align-items:center;padding:0 6px;color:var(--rim2);font-size:14px;flex-shrink:0}
+
+/* NOTES EDITOR */
+.notes-section{margin-bottom:20px}
+.notes-tabs{display:flex;gap:1px;margin-bottom:10px}
+.notes-tab{padding:6px 14px;font-size:11px;cursor:pointer;border-radius:var(--r3);color:var(--tx3);background:var(--s2);border:1px solid var(--rim);transition:all .12s}
+.notes-tab.on{color:var(--amber);border-color:var(--amber-b);background:var(--amber-l)}
+.notes-content{display:none}
+.notes-content.on{display:block}
+.notes-editor{
+  width:100%;background:var(--s1);border:1px solid var(--rim);
+  border-radius:var(--r2);color:var(--tx);
+  padding:12px 14px;font-size:12.5px;font-family:var(--ff);
+  line-height:1.8;resize:vertical;min-height:120px;outline:none;transition:border-color .15s
+}
+.notes-editor:focus{border-color:var(--amber)}
+.notes-save{margin-top:8px;display:flex;gap:7px;align-items:center}
+.save-ts{font-family:var(--fm);font-size:10px;color:var(--tx4)}
+
+/* RELATED */
+.related-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.rel-card{
+  background:var(--s1);border:1px solid var(--rim);border-radius:var(--r2);
+  padding:10px 12px;cursor:pointer;transition:all .12s
+}
+.rel-card:hover{border-color:var(--rim2);background:var(--s2)}
+.rel-card-top{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.rel-name{font-size:12px;font-weight:500;color:var(--tx)}
+.rel-step{font-size:10px;color:var(--tx3);font-family:var(--fm)}
+.rel-ok{font-family:var(--fm);font-size:10px;color:var(--gr);margin-top:3px}
+
+/* CHECKLIST */
+.checklist{display:flex;flex-direction:column;gap:4px}
+.ck-item{display:flex;align-items:flex-start;gap:8px;padding:7px 10px;background:var(--s2);border:1px solid var(--rim);border-radius:var(--r3)}
+.ck-item input[type=checkbox]{width:14px;height:14px;accent-color:var(--amber);margin-top:1px;flex-shrink:0;cursor:pointer}
+.ck-text{font-size:12px;color:var(--tx2);line-height:1.6;flex:1}
+.ck-item.done .ck-text{color:var(--tx3);text-decoration:line-through}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}
+.overlay.on{display:flex}
+.modal{background:var(--s1);border:1px solid var(--rim2);border-radius:var(--r);max-width:560px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.7)}
+.modal-head{padding:16px 18px 12px;border-bottom:1px solid var(--rim);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:14px;font-weight:600}
+.modal-close{background:none;border:none;color:var(--tx3);font-size:17px;cursor:pointer;padding:0 4px;line-height:1}
+.modal-close:hover{color:var(--tx)}
+.modal-body{padding:16px 18px}
+.modal-foot{padding:11px 18px;border-top:1px solid var(--rim);display:flex;justify-content:flex-end;gap:7px}
+.field-g{margin-bottom:13px}
+.field-label{font-size:10px;font-weight:600;color:var(--tx3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;font-family:var(--fm)}
+.field-req{color:var(--red)}
+.f-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+input[type=text],textarea,select{width:100%;background:var(--s2);border:1px solid var(--rim);border-radius:var(--r2);color:var(--tx);padding:7px 10px;font-size:12.5px;font-family:var(--ff);outline:none;transition:border-color .15s}
+input:focus,textarea:focus,select:focus{border-color:var(--amber)}
+textarea{resize:vertical;min-height:70px}
+select option{background:var(--s2)}
+
+/* TOAST */
+.toast{position:fixed;bottom:18px;right:18px;background:var(--s2);border:1px solid var(--rim2);border-radius:var(--r2);padding:10px 16px;font-size:12px;z-index:300;display:none;align-items:center;gap:8px;box-shadow:0 6px 24px rgba(0,0,0,.5);max-width:320px;font-family:var(--fm)}
+.toast.on{display:flex}
+.toast.ok{border-color:var(--gr-b);color:var(--gr)}
+.toast.er{border-color:var(--red-b);color:var(--red)}
+.toast.inf{border-color:var(--amber-b);color:var(--amber)}
+
+/* LOADING SPINNER */
+.spin{display:inline-block;width:12px;height:12px;border:2px solid var(--rim2);border-top-color:var(--amber);border-radius:50%;animation:sp .6s linear infinite;vertical-align:middle;margin-right:5px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.saving-over{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:250;display:none;align-items:center;justify-content:center}
+.saving-over.on{display:flex}
+.saving-box{background:var(--s1);border:1px solid var(--rim2);border-radius:var(--r);padding:20px 28px;text-align:center;font-size:12px;color:var(--tx2);font-family:var(--fm)}
+.saving-box strong{color:var(--tx);display:block;margin-bottom:6px;font-size:13px}
+
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--s5);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <span class="tb-badge">HACCP / QC</span>
+  <div>
+    <div class="tb-title">検査基準 ナレッジベース</div>
+    <div class="tb-sub">🍺 ビール製造 仕込み→缶充填 ／ 全7工程 55項目</div>
+  </div>
+  <div class="tb-spacer"></div>
+  <div class="tb-tabs">
+    <div class="tb-tab" onclick="switchTab('howto')">🚀 使い方</div>
+    <div class="tb-tab on" onclick="switchTab('glossary')">📖 用語解説</div>
+    <div class="tb-tab" onclick="switchTab('list')">📋 基準一覧</div>
+    <div class="tb-tab" id="tab-detail" style="display:none" onclick="switchTab('detail')">📄 詳細ページ</div>
+  </div>
+  <div class="tb-led"><div class="led" id="led"></div><span id="ledTx">…</span></div>
+</div>
+
+<!-- BODY -->
+<div class="body">
+
+<!-- SIDEBAR -->
+<div class="sb">
+  <div class="sb-section">
+    <div class="sb-hd">ナビゲーション</div>
+    <div class="sb-item" id="sbn-howto" onclick="switchTab('howto')">
+      <div class="sb-pip"></div>🚀 使い方ガイド
+    </div>
+    <div class="sb-item" id="sbn-glossary" onclick="switchTab('glossary')">
+      <div class="sb-pip"></div>📖 用語・概念解説
+    </div>
+    <div class="sb-item on" id="sbn-list" onclick="switchTab('list')">
+      <div class="sb-pip"></div>📋 検査基準一覧
+      <span class="sb-cnt" id="sb-total">—</span>
+    </div>
+  </div>
+  <div class="sb-divider"></div>
+  <div class="sb-section">
+    <div class="sb-hd">分類フィルター</div>
+    <div class="sb-item" onclick="applyFilter('all')" id="sf-all">
+      <div class="sb-pip" style="background:var(--tx3)"></div>すべて
+      <span class="sb-cnt" id="sf-all-cnt">—</span>
+    </div>
+    <div class="sb-item" onclick="applyFilter('CCP')" id="sf-ccp">
+      <div class="sb-pip" style="color:var(--red)"></div>CCP
+      <span class="sb-cnt" id="sf-ccp-cnt">—</span>
+    </div>
+    <div class="sb-item" onclick="applyFilter('OP')" id="sf-op">
+      <div class="sb-pip" style="color:var(--blue)"></div>OP
+      <span class="sb-cnt" id="sf-op-cnt">—</span>
+    </div>
+    <div class="sb-item" onclick="applyFilter('Q')" id="sf-q">
+      <div class="sb-pip" style="color:var(--pur)"></div>Q（品質）
+      <span class="sb-cnt" id="sf-q-cnt">—</span>
+    </div>
+  </div>
+  <div class="sb-divider"></div>
+  <div class="sb-section">
+    <div class="sb-hd">工程フィルター</div>
+    <div class="sb-item" onclick="applyStepFilter('all')" id="ss-all"><div class="sb-pip" style="background:var(--tx3)"></div>全工程</div>
+    <div class="sb-item" onclick="applyStepFilter('仕込み・糖化')" id="ss-s1"><div class="sb-pip" style="color:#e8c020"></div>仕込み・糖化</div>
+    <div class="sb-item" onclick="applyStepFilter('煮沸・ホップ添加')" id="ss-s2"><div class="sb-pip" style="color:#e07020"></div>煮沸・ホップ</div>
+    <div class="sb-item" onclick="applyStepFilter('冷却・酵母接種')" id="ss-s3"><div class="sb-pip" style="color:var(--blue)"></div>冷却・酵母接種</div>
+    <div class="sb-item" onclick="applyStepFilter('発酵管理')" id="ss-s4"><div class="sb-pip" style="color:var(--pur)"></div>発酵管理</div>
+    <div class="sb-item" onclick="applyStepFilter('貯酒・濾過')" id="ss-s5"><div class="sb-pip" style="color:var(--gr)"></div>貯酒・濾過</div>
+    <div class="sb-item" onclick="applyStepFilter('缶充填・密封')" id="ss-s6"><div class="sb-pip" style="color:var(--red)"></div>缶充填・密封</div>
+    <div class="sb-item" onclick="applyStepFilter('出荷前最終検査')" id="ss-s7"><div class="sb-pip" style="color:var(--tx3)"></div>出荷前最終検査</div>
+  </div>
+  <div class="sb-divider"></div>
+  <div style="padding:8px 0">
+    <a class="sb-notion-link" href="https://www.notion.so/1c4c6bb7cbfb4a4bbce8461f7b28ee2e" target="_blank">🔬 基準マスタDB ↗</a>
+    <a class="sb-notion-link" href="https://www.notion.so/8177402a8eb04c18b66b5bed66dcb3b7" target="_blank">📋 変更履歴DB ↗</a>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<!-- ══ HOWTO PANEL ══ -->
+<div class="panel" id="panel-howto">
+<div class="gloss-wrap">
+
+  <!-- HERO -->
+  <div class="gloss-hero" style="background:linear-gradient(135deg,#131a2e 0%,#0e1018 100%)">
+    <div class="gloss-hero-label">Quick Start Guide</div>
+    <div class="gloss-hero-title" style="font-size:20px">このアプリの使い方</div>
+    <div class="gloss-hero-body">
+      ビール製造の全工程（仕込み→缶充填）に渡る<strong>55件の検査基準</strong>を管理するHACCPナレッジベースです。<br>
+      Notionと双方向で連携しており、アプリ上での変更が自動でDBに反映されます。
+    </div>
+  </div>
+
+  <!-- STEP CARDS -->
+  <div style="margin-bottom:8px">
+    <div class="flow-sec-title" style="font-size:11px;color:var(--tx3);font-family:var(--fm);letter-spacing:.07em;text-transform:uppercase;display:flex;align-items:center;gap:7px;margin-bottom:14px">
+      基本的な使い方 — 4ステップ <span style="flex:1;height:1px;background:var(--rim);display:block"></span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-bottom:24px">
+
+      <div style="background:var(--s1);border:1px solid var(--rim);border-radius:var(--r);overflow:hidden">
+        <div style="background:var(--amber-l);border-bottom:1px solid var(--amber-b);padding:10px 14px;display:flex;align-items:center;gap:10px">
+          <div style="font-family:var(--fm);font-size:18px;font-weight:500;color:var(--amber);line-height:1">01</div>
+          <div style="font-size:13px;font-weight:600;color:var(--tx)">用語解説で全体像を把握</div>
+        </div>
+        <div style="padding:12px 14px;font-size:12px;color:var(--tx2);line-height:1.8">
+          初めての方は「📖 用語解説」タブを開き、<strong style="color:var(--tx)">CCP・OP・Q の違い</strong>と<strong style="color:var(--tx)">HACCP7原則</strong>を確認してください。
+          右のサイドバーからも各用語にジャンプできます。
+          <div style="margin-top:8px;padding:7px 10px;background:var(--s2);border-radius:var(--r3);font-size:11.5px;color:var(--tx3)">
+            💡 専門用語（CIP・TPO・IBUなど）は用語集で解説しています
+          </div>
+        </div>
+      </div>
+
+      <div style="background:var(--s1);border:1px solid var(--rim);border-radius:var(--r);overflow:hidden">
+        <div style="background:var(--blue-l);border-bottom:1px solid var(--blue-b);padding:10px 14px;display:flex;align-items:center;gap:10px">
+          <div style="font-family:var(--fm);font-size:18px;font-weight:500;color:var(--blue);line-height:1">02</div>
+          <div style="font-size:13px;font-weight:600;color:var(--tx)">基準一覧を確認・検索</div>
+        </div>
+        <div style="padding:12px 14px;font-size:12px;color:var(--tx2);line-height:1.8">
+          「📋 基準一覧」タブでNotionDBの全項目を読み込みます。サイドバーの<strong style="color:var(--tx)">工程フィルター</strong>や上部の<strong style="color:var(--tx)">CCP/OP/Q フィルター</strong>で絞り込めます。
+          <div style="margin-top:8px;padding:7px 10px;background:var(--s2);border-radius:var(--r3);font-size:11.5px;color:var(--tx3)">
+            🔍 検索ボックスで項目名・工程をリアルタイム検索できます
+          </div>
+        </div>
+      </div>
+
+      <div style="background:var(--s1);border:1px solid var(--rim);border-radius:var(--r);overflow:hidden">
+        <div style="background:var(--pur-l);border-bottom:1px solid var(--pur-b);padding:10px 14px;display:flex;align-items:center;gap:10px">
+          <div style="font-family:var(--fm);font-size:18px;font-weight:500;color:var(--pur);line-height:1">03</div>
+          <div style="font-size:13px;font-weight:600;color:var(--tx)">項目をクリックして詳細ページへ</div>
+        </div>
+        <div style="padding:12px 14px;font-size:12px;color:var(--tx2);line-height:1.8">
+          各行をクリックすると「📄 詳細ページ」が開きます。<strong style="color:var(--tx)">工程フロー・NG時処置・チェックリスト・メモ欄</strong>が使えます。
+          <strong style="color:var(--tx)">相互参照</strong>から同工程や同分類の他項目に素早く移動できます。
+          <div style="margin-top:8px;padding:7px 10px;background:var(--s2);border-radius:var(--r3);font-size:11.5px;color:var(--tx3)">
+            ✏️ 「編集」ボタンで基準値の変更が可能。変更履歴は自動でNotionに記録
+          </div>
+        </div>
+      </div>
+
+      <div style="background:var(--s1);border:1px solid var(--rim);border-radius:var(--r);overflow:hidden">
+        <div style="background:var(--gr-l);border-bottom:1px solid var(--gr-b);padding:10px 14px;display:flex;align-items:center;gap:10px">
+          <div style="font-family:var(--fm);font-size:18px;font-weight:500;color:var(--gr);line-height:1">04</div>
+          <div style="font-size:13px;font-weight:600;color:var(--tx)">編集・追加でNotionに保存</div>
+        </div>
+        <div style="padding:12px 14px;font-size:12px;color:var(--tx2);line-height:1.8">
+          一覧の「＋ 追加」ボタンで新規項目、詳細の「✏️ 編集」で既存項目を変更できます。
+          保存すると<strong style="color:var(--tx)">🔬 基準マスタDB</strong>と<strong style="color:var(--tx)">📋 変更履歴DB</strong>の両方に反映されます。
+          <div style="margin-top:8px;padding:7px 10px;background:var(--s2);border-radius:var(--r3);font-size:11.5px;color:var(--tx3)">
+            💾 詳細ページの「メモ」もNotionのフィールドに保存されます
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SCREEN MAP -->
+  <div class="flow-sec-title" style="font-size:11px;color:var(--tx3);font-family:var(--fm);letter-spacing:.07em;text-transform:uppercase;display:flex;align-items:center;gap:7px;margin-bottom:14px">
+    画面構成マップ <span style="flex:1;height:1px;background:var(--rim);display:block"></span>
+  </div>
+  <div style="background:var(--s1);border:1px solid var(--rim);border-radius:var(--r);overflow:hidden;margin-bottom:20px">
+    <!-- mock layout diagram -->
+    <div style="padding:14px 16px;border-bottom:1px solid var(--rim);display:flex;align-items:center;gap:10px;background:var(--s2)">
+      <span style="font-family:var(--fm);font-size:10px;color:var(--amber)">TOPBAR</span>
+      <span style="font-size:11.5px;color:var(--tx2)">— ロゴ・タイトル・タブ切り替え・Notion接続インジケーター</span>
+    </div>
+    <div style="display:flex;min-height:220px">
+      <!-- sidebar mock -->
+      <div style="width:160px;flex-shrink:0;border-right:1px solid var(--rim);padding:10px 12px;background:var(--s2)">
+        <div style="font-family:var(--fm);font-size:9px;color:var(--amber);margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em">SIDEBAR</div>
+        <div style="font-size:11px;color:var(--tx2);line-height:2">
+          <div style="color:var(--amber)">▸ 使い方ガイド</div>
+          <div>▸ 用語解説</div>
+          <div>▸ 基準一覧</div>
+          <div style="margin-top:6px;color:var(--tx3)">──── フィルター ────</div>
+          <div>CCP / OP / Q</div>
+          <div>7工程 切り替え</div>
+          <div style="margin-top:6px;color:var(--blue);font-size:10px">🔗 Notion直リンク</div>
+        </div>
+      </div>
+      <!-- main area mock -->
+      <div style="flex:1;padding:12px 16px">
+        <div style="font-family:var(--fm);font-size:9px;color:var(--amber);margin-bottom:10px;text-transform:uppercase;letter-spacing:.08em">MAIN AREA（タブで切り替え）</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+          <div style="background:var(--s2);border:1px solid var(--amber-b);border-radius:var(--r3);padding:9px 10px">
+            <div style="font-size:10px;font-weight:600;color:var(--amber);margin-bottom:5px">🚀 使い方</div>
+            <div style="font-size:10.5px;color:var(--tx3);line-height:1.7">このガイド<br>4ステップ解説<br>画面構成マップ<br>FAQ</div>
+          </div>
+          <div style="background:var(--s2);border:1px solid var(--rim);border-radius:var(--r3);padding:9px 10px">
+            <div style="font-size:10px;font-weight:600;color:var(--tx2);margin-bottom:5px">📖 用語解説</div>
+            <div style="font-size:10.5px;color:var(--tx3);line-height:1.7">CCP/OP/Q定義<br>3段階基準値<br>HACCP7原則<br>専門用語集</div>
+          </div>
+          <div style="background:var(--s2);border:1px solid var(--rim);border-radius:var(--r3);padding:9px 10px">
+            <div style="font-size:10px;font-weight:600;color:var(--tx2);margin-bottom:5px">📋 基準一覧</div>
+            <div style="font-size:10.5px;color:var(--tx3);line-height:1.7">工程別グループ<br>検索・フィルター<br>行クリックで詳細<br>＋追加ボタン</div>
+          </div>
+        </div>
+        <div style="margin-top:8px;background:var(--s2);border:1px solid var(--rim);border-radius:var(--r3);padding:9px 10px">
+          <div style="font-size:10px;font-weight:600;color:var(--tx2);margin-bottom:5px">📄 詳細ページ（項目クリックで出現）</div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px">
+            <div style="font-size:10px;color:var(--tx3);text-align:center;background:var(--s3);border-radius:3px;padding:4px">分類理由</div>
+            <div style="font-size:10px;color:var(--tx3);text-align:center;background:var(--s3);border-radius:3px;padding:4px">基準値カード</div>
+            <div style="font-size:10px;color:var(--tx3);text-align:center;background:var(--s3);border-radius:3px;padding:4px">工程フロー図</div>
+            <div style="font-size:10px;color:var(--tx3);text-align:center;background:var(--s3);border-radius:3px;padding:4px">NG処置一覧</div>
+            <div style="font-size:10px;color:var(--tx3);text-align:center;background:var(--s3);border-radius:3px;padding:4px">相互参照</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTION SYNC GUIDE -->
+  <div class="flow-sec-title" style="font-size:11px;color:var(--tx3);font-family:var(--fm);letter-spacing:.07em;text-transform:uppercase;display:flex;align-items:center;gap:7px;margin-bottom:14px">
+    Notion連携の仕組み <span style="flex:1;height:1px;background:var(--rim);display:block"></span>
+  </div>
+  <div style="background:var(--s1);border:1px solid var(--rim);border-radius:var(--r);padding:0;overflow:hidden;margin-bottom:20px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
+      <div style="padding:14px 16px;border-right:1px solid var(--rim)">
+        <div style="font-size:11px;font-weight:600;color:var(--gr);font-family:var(--fm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">READ（読み込み）</div>
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <div style="display:flex;gap:8px;font-size:12px;color:var(--tx2)"><div style="color:var(--gr);flex-shrink:0">→</div>「📋 基準一覧」を開くと🔬 検査基準マスタDB から全55件を自動取得</div>
+          <div style="display:flex;gap:8px;font-size:12px;color:var(--tx2)"><div style="color:var(--gr);flex-shrink:0">→</div>各項目のページIDがURLとして保持され、詳細ページの「Notionで開く」ボタンに使用</div>
+          <div style="display:flex;gap:8px;font-size:12px;color:var(--tx2)"><div style="color:var(--gr);flex-shrink:0">→</div>フィルター・検索はローカルで完結するため高速</div>
+        </div>
+      </div>
+      <div style="padding:14px 16px">
+        <div style="font-size:11px;font-weight:600;color:var(--amber);font-family:var(--fm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">WRITE（書き込み）</div>
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <div style="display:flex;gap:8px;font-size:12px;color:var(--tx2)"><div style="color:var(--amber);flex-shrink:0">←</div>「編集」「＋追加」で保存すると🔬 基準マスタDBを更新</div>
+          <div style="display:flex;gap:8px;font-size:12px;color:var(--tx2)"><div style="color:var(--amber);flex-shrink:0">←</div>同時に📋 変更履歴DBに変更差分・理由・日時・版数を自動記録</div>
+          <div style="display:flex;gap:8px;font-size:12px;color:var(--tx2)"><div style="color:var(--amber);flex-shrink:0">←</div>詳細ページの「メモ保存」で測定方法・備考フィールドに書き込み</div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:10px 16px;background:var(--s2);border-top:1px solid var(--rim);display:flex;gap:20px">
+      <a href="https://www.notion.so/1c4c6bb7cbfb4a4bbce8461f7b28ee2e" target="_blank" style="font-size:11px;color:var(--blue);text-decoration:none;display:flex;align-items:center;gap:5px">🔬 検査基準マスタDB ↗</a>
+      <a href="https://www.notion.so/8177402a8eb04c18b66b5bed66dcb3b7" target="_blank" style="font-size:11px;color:var(--blue);text-decoration:none;display:flex;align-items:center;gap:5px">📋 変更履歴DB ↗</a>
+    </div>
+  </div>
+
+  <!-- DETAIL PAGE GUIDE -->
+  <div class="flow-sec-title" style="font-size:11px;color:var(--tx3);font-family:var(--fm);letter-spacing:.07em;text-transform:uppercase;display:flex;align-items:center;gap:7px;margin-bottom:14px">
+    詳細ページの各セクション <span style="flex:1;height:1px;background:var(--rim);display:block"></span>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:20px">
+    <div style="background:var(--s1);border:1px solid var(--rim);border-radius:var(--r2);padding:11px 14px;display:flex;gap:14px;align-items:flex-start">
+      <div style="font-size:18px;flex-shrink:0;line-height:1;margin-top:1px">⚠️</div>
+      <div><div style="font-size:12.5px;font-weight:600;color:var(--tx);margin-bottom:3px">分類の理由説明</div><div style="font-size:12px;color:var(--tx2);line-height:1.7">CCP・OP・Qそれぞれなぜその分類なのかを説明します。CCPなら「後工程での回収不可」、OPなら「補正余地あり」など。監査時の説明根拠になります。</div></div>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--rim);border-radius:var(--r2);padding:11px 14px;display:flex;gap:14px;align-items:flex-start">
+      <div style="font-size:18px;flex-shrink:0;line-height:1;margin-top:1px">📊</div>
+      <div><div style="font-size:12.5px;font-weight:600;color:var(--tx);margin-bottom:3px">判定基準値カード</div><div style="font-size:12px;color:var(--tx2);line-height:1.7"><span style="color:var(--gr)">緑 = 合格（CL）</span>・<span style="color:var(--amber)">黄 = 警告値</span>・<span style="color:var(--red)">赤 = NGライン</span> の3段階で視覚化。測定方法・頻度・改定バージョンも確認できます。</div></div>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--rim);border-radius:var(--r2);padding:11px 14px;display:flex;gap:14px;align-items:flex-start">
+      <div style="font-size:18px;flex-shrink:0;line-height:1;margin-top:1px">🔄</div>
+      <div><div style="font-size:12.5px;font-weight:600;color:var(--tx);margin-bottom:3px">工程フロー図</div><div style="font-size:12px;color:var(--tx2);line-height:1.7">仕込みから出荷前まで全7工程を横断したフロー図で、現在の項目の位置をハイライト表示します。各工程に同分類の項目が何件あるかも一目で確認できます。</div></div>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--rim);border-radius:var(--r2);padding:11px 14px;display:flex;gap:14px;align-items:flex-start">
+      <div style="font-size:18px;flex-shrink:0;line-height:1;margin-top:1px">✅</div>
+      <div><div style="font-size:12.5px;font-weight:600;color:var(--tx);margin-bottom:3px">NG時処置チェックリスト</div><div style="font-size:12px;color:var(--tx2);line-height:1.7">逸脱発生時の対応手順がチェックリスト形式で表示されます。CCP/OP/Qでデフォルト手順が異なります。チェックを入れると打ち消し線で完了を記録できます。</div></div>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--rim);border-radius:var(--r2);padding:11px 14px;display:flex;gap:14px;align-items:flex-start">
+      <div style="font-size:18px;flex-shrink:0;line-height:1;margin-top:1px">📝</div>
+      <div><div style="font-size:12.5px;font-weight:600;color:var(--tx);margin-bottom:3px">作業メモ・手順詳細エディタ</div><div style="font-size:12px;color:var(--tx2);line-height:1.7">「詳細手順」タブには測定の具体的ステップ、「備考」タブには注意事項や過去の逸脱事例などを自由記入できます。「Notionに保存」でDBのフィールドに反映されます。</div></div>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--rim);border-radius:var(--r2);padding:11px 14px;display:flex;gap:14px;align-items:flex-start">
+      <div style="font-size:18px;flex-shrink:0;line-height:1;margin-top:1px">🔗</div>
+      <div><div style="font-size:12.5px;font-weight:600;color:var(--tx);margin-bottom:3px">相互参照</div><div style="font-size:12px;color:var(--tx2);line-height:1.7">同じ工程の他の検査項目と、他工程の同分類（CCP/OP/Q）項目がカードで並びます。クリックで即座に詳細ページへ遷移できます。工程をまたいだ管理点の整合確認に役立ちます。</div></div>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="flow-sec-title" style="font-size:11px;color:var(--tx3);font-family:var(--fm);letter-spacing:.07em;text-transform:uppercase;display:flex;align-items:center;gap:7px;margin-bottom:14px">
+    よくある質問 <span style="flex:1;height:1px;background:var(--rim);display:block"></span>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:20px" id="faqList">
+    <div class="faq-item" style="background:var(--s1);border:1px solid var(--rim);border-radius:var(--r2);overflow:hidden">
+      <div style="padding:11px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:500;color:var(--tx)" onclick="toggleFaq(this)">
+        <span style="color:var(--amber);font-family:var(--fm);font-size:11px;flex-shrink:0">Q</span>
+        Notionとの接続が確立されるまでどれくらいかかりますか？
+        <span style="margin-left:auto;color:var(--tx3);font-size:12px">▾</span>
+      </div>
+      <div class="faq-ans" style="display:none;padding:0 14px 12px;font-size:12px;color:var(--tx2);line-height:1.8;border-top:1px solid var(--rim);padding-top:10px">
+        「📋 基準一覧」タブを初めて開いたときに読み込みが始まります。GAS ウェブアプリ経由でNotionに接続するため、初回は10〜30秒程度かかります。右上のインジケーターが緑に変わると接続完了です。
+      </div>
+    </div>
+    <div class="faq-item" style="background:var(--s1);border:1px solid var(--rim);border-radius:var(--r2);overflow:hidden">
+      <div style="padding:11px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:500;color:var(--tx)" onclick="toggleFaq(this)">
+        <span style="color:var(--amber);font-family:var(--fm);font-size:11px;flex-shrink:0">Q</span>
+        基準値を変更したら変更履歴は自動で残りますか？
+        <span style="margin-left:auto;color:var(--tx3);font-size:12px">▾</span>
+      </div>
+      <div class="faq-ans" style="display:none;padding:0 14px 12px;font-size:12px;color:var(--tx2);line-height:1.8;border-top:1px solid var(--rim);padding-top:10px">
+        はい。「Notionに保存」ボタンを押すと、検査基準マスタDBの更新と同時に、変更履歴DBへ「変更前→変更後」「変更者」「変更理由」「日時」「バージョン」が自動で書き込まれます。バージョン番号もv1.0→v1.1のように自動インクリメントされます。
+      </div>
+    </div>
+    <div class="faq-item" style="background:var(--s1);border:1px solid var(--rim);border-radius:var(--r2);overflow:hidden">
+      <div style="padding:11px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:500;color:var(--tx)" onclick="toggleFaq(this)">
+        <span style="color:var(--amber);font-family:var(--fm);font-size:11px;flex-shrink:0">Q</span>
+        詳細ページに入力したメモはどこに保存されますか？
+        <span style="margin-left:auto;color:var(--tx3);font-size:12px">▾</span>
+      </div>
+      <div class="faq-ans" style="display:none;padding:0 14px 12px;font-size:12px;color:var(--tx2);line-height:1.8;border-top:1px solid var(--rim);padding-top:10px">
+        「詳細手順」は検査基準マスタDBの「測定方法」フィールドに、「備考」は「備考」フィールドにそれぞれ保存されます。Notionのページを直接開いても同じ内容が確認できます。「Notionで開く ↗」ボタンからジャンプできます。
+      </div>
+    </div>
+    <div class="faq-item" style="background:var(--s1);border:1px solid var(--rim);border-radius:var(--r2);overflow:hidden">
+      <div style="padding:11px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:500;color:var(--tx)" onclick="toggleFaq(this)">
+        <span style="color:var(--amber);font-family:var(--fm);font-size:11px;flex-shrink:0">Q</span>
+        新しい検査項目を追加するにはどうすればよいですか？
+        <span style="margin-left:auto;color:var(--tx3);font-size:12px">▾</span>
+      </div>
+      <div class="faq-ans" style="display:none;padding:0 14px 12px;font-size:12px;color:var(--tx2);line-height:1.8;border-top:1px solid var(--rim);padding-top:10px">
+        「📋 基準一覧」の右上にある「＋ 追加」ボタンをクリックします。入力フォームが開くので、検査項目名・工程・分類（必須）と各基準値を入力し「Notionに保存」を押してください。追加後は自動で一覧が更新されます。
+      </div>
+    </div>
+    <div class="faq-item" style="background:var(--s1);border:1px solid var(--rim);border-radius:var(--r2);overflow:hidden">
+      <div style="padding:11px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:500;color:var(--tx)" onclick="toggleFaq(this)">
+        <span style="color:var(--amber);font-family:var(--fm);font-size:11px;flex-shrink:0">Q</span>
+        GASとの違いは何ですか？
+        <span style="margin-left:auto;color:var(--tx3);font-size:12px">▾</span>
+      </div>
+      <div class="faq-ans" style="display:none;padding:0 14px 12px;font-size:12px;color:var(--tx2);line-height:1.8;border-top:1px solid var(--rim);padding-top:10px">
+        このアプリはブラウザから直接GAS経由でNotionに接続する「閲覧・編集ツール」です。GAS（Google Apps Script）はバックエンド仲介層として機能し、APIキー管理とデータ同期を担当します。定期的な大量更新はバッチスクリプトで、日常的な参照・個別編集はこのアプリという使い分けを推奨します。
+      </div>
+    </div>
+  </div>
+
+  <!-- QUICK START BTN -->
+  <div style="text-align:center;padding:10px 0 4px">
+    <button class="btn btn-p" style="padding:10px 28px;font-size:13px" onclick="switchTab('list')">📋 基準一覧を開く →</button>
+    <button class="btn" style="padding:10px 20px;font-size:13px;margin-left:8px" onclick="switchTab('glossary')">📖 用語解説を読む</button>
+  </div>
+
+</div>
+</div>
+<!-- ══ END HOWTO PANEL ══ -->
+
+<!-- ══ GLOSSARY PANEL ══ -->
+<div class="panel" id="panel-glossary">
+<div class="gloss-wrap">
+
+  <div class="gloss-hero">
+    <div class="gloss-hero-label">HACCP とは</div>
+    <div class="gloss-hero-title">Hazard Analysis and Critical Control Points</div>
+    <div class="gloss-hero-body">
+      食品の安全性を確保するための国際標準的な管理システム。<strong>「どこで何が危険になるか」を事前に分析し</strong>、その重要な制御点（CCP）を継続的に監視・記録する手法。
+      製造工程全体を「危害が発生するリスク」「後工程で除去できるか」の2軸で評価し、科学的根拠に基づく基準を設定する。
+      <br><br>日本では2021年より<strong>食品衛生法に基づくHACCP義務化</strong>が完全施行されており、規模を問わず全ての食品事業者に適用される。
+    </div>
+  </div>
+
+  <div class="flow-sec-title" style="margin-bottom:12px;font-size:11px;color:var(--tx3);font-family:var(--fm);letter-spacing:.07em;text-transform:uppercase;display:flex;align-items:center;gap:7px">分類の違い — CCP / OP / Q <span style="flex:1;height:1px;background:var(--rim);display:block"></span></div>
+
+  <div class="gloss-grid">
+    <div class="gloss-card">
+      <div class="gloss-card-head">
+        <div>
+          <div class="gloss-card-badge b-ccp">CCP</div>
+        </div>
+        <div>
+          <div class="gloss-card-title">重要管理点</div>
+          <div class="gloss-card-subtitle">Critical Control Point</div>
+        </div>
+      </div>
+      <div class="gloss-card-body">
+        <div class="gloss-card-desc">食品安全上の<strong style="color:var(--red)">危害を防止・除去・許容範囲内に低減</strong>するために必須の工程。<br>ここが崩れると後工程での回復が不可能。監査で最優先に確認される。</div>
+        <div style="font-size:10px;color:var(--tx3);font-family:var(--fm);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">本DBの例</div>
+        <div class="gloss-card-examples">
+          <div class="ex-row"><div class="ex-dot"></div>煮沸温度（殺菌の唯一の機会）</div>
+          <div class="ex-row"><div class="ex-dot"></div>発酵タンクATP（CIP後の清潔確認）</div>
+          <div class="ex-row"><div class="ex-dot"></div>ヘッドスペースDO・シーム強度（缶充填）</div>
+          <div class="ex-row"><div class="ex-dot"></div>アレルゲン表示確認（食品表示法）</div>
+        </div>
+        <div style="margin-top:10px;padding:8px 10px;background:var(--red-l);border:1px solid var(--red-b);border-radius:var(--r3);font-size:11px;color:var(--red)">
+          ⚠️ CLを逸脱したら即座に是正措置が必要。記録の欠落も違反とみなされる。
+        </div>
+      </div>
+    </div>
+
+    <div class="gloss-card">
+      <div class="gloss-card-head">
+        <div>
+          <div class="gloss-card-badge b-op">OP</div>
+        </div>
+        <div>
+          <div class="gloss-card-title">一般管理点</div>
+          <div class="gloss-card-subtitle">Operational Pre-Requisite Program</div>
+        </div>
+      </div>
+      <div class="gloss-card-body">
+        <div class="gloss-card-desc">食品安全に関連するが、<strong style="color:var(--blue)">CCPほど絶対的ではない</strong>管理点。逸脱しても後工程で補正や回収の余地がある場合が多い。<br>PRPと組み合わせてGMP（適正製造規範）を構成する。</div>
+        <div style="font-size:10px;color:var(--tx3);font-family:var(--fm);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">本DBの例</div>
+        <div class="gloss-card-examples">
+          <div class="ex-row"><div class="ex-dot" style="background:var(--blue)"></div>仕込み水温度（レシピ±2℃ 後で調整可）</div>
+          <div class="ex-row"><div class="ex-dot" style="background:var(--blue)"></div>冷却所要時間（60分以内）</div>
+          <div class="ex-row"><div class="ex-dot" style="background:var(--blue)"></div>官能評価・異臭チェック</div>
+          <div class="ex-row"><div class="ex-dot" style="background:var(--blue)"></div>貯酒温度（0–4℃）</div>
+        </div>
+        <div style="margin-top:10px;padding:8px 10px;background:var(--blue-l);border:1px solid var(--blue-b);border-radius:var(--r3);font-size:11px;color:var(--blue)">
+          ℹ️ 逸脱時は記録＋上長報告。製品は後工程での確認後に判断。
+        </div>
+      </div>
+    </div>
+
+    <div class="gloss-card">
+      <div class="gloss-card-head">
+        <div>
+          <div class="gloss-card-badge b-q">Q</div>
+        </div>
+        <div>
+          <div class="gloss-card-title">品質管理点</div>
+          <div class="gloss-card-subtitle">Quality Control Point</div>
+        </div>
+      </div>
+      <div class="gloss-card-body">
+        <div class="gloss-card-desc">食品安全への直接的影響は低いが、<strong style="color:var(--pur)">製品品質・風味・外観</strong>に影響する管理点。HACCPの7原則には含まれないが、ブランド品質の維持に不可欠。</div>
+        <div style="font-size:10px;color:var(--tx3);font-family:var(--fm);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">本DBの例</div>
+        <div class="gloss-card-examples">
+          <div class="ex-row"><div class="ex-dot" style="background:var(--pur)"></div>麦汁OG・FG（目標比重±2P）</div>
+          <div class="ex-row"><div class="ex-dot" style="background:var(--pur)"></div>炭酸ガス圧（CO₂ Vol）</div>
+          <div class="ex-row"><div class="ex-dot" style="background:var(--pur)"></div>濾過後濁度（EBC値）</div>
+          <div class="ex-row"><div class="ex-dot" style="background:var(--pur)"></div>発酵後ABV（推定アルコール度数）</div>
+        </div>
+        <div style="margin-top:10px;padding:8px 10px;background:var(--pur-l);border:1px solid var(--pur-b);border-radius:var(--r3);font-size:11px;color:var(--pur)">
+          ✦ 逸脱時は品質低下として記録。安全問題ではないが官能評価強化を行う。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-sec-title" style="margin:20px 0 12px;font-size:11px;color:var(--tx3);font-family:var(--fm);letter-spacing:.07em;text-transform:uppercase;display:flex;align-items:center;gap:7px">判定基準の3段階 <span style="flex:1;height:1px;background:var(--rim);display:block"></span></div>
+  <div class="gloss-grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
+    <div class="gloss-card">
+      <div class="gloss-card-head"><div class="gloss-card-badge b-ok">合格 CL</div><div><div class="gloss-card-title" style="font-size:13px">Critical Limit（臨界限界値）</div></div></div>
+      <div class="gloss-card-body"><div class="gloss-card-desc">この範囲内であれば製品は安全・品質適合とみなされる数値範囲。科学的根拠に基づき設定。</div></div>
+    </div>
+    <div class="gloss-card">
+      <div class="gloss-card-head"><div class="gloss-card-badge b-warn">警告値</div><div><div class="gloss-card-title" style="font-size:13px">Warning Level（運用限界値）</div></div></div>
+      <div class="gloss-card-body"><div class="gloss-card-desc">CLに近づいているが未逸脱の状態。上長報告・操作調整が必要。記録に残し次の測定で確認する。</div></div>
+    </div>
+    <div class="gloss-card">
+      <div class="gloss-card-head"><div class="gloss-card-badge b-ng">NG ライン</div><div><div class="gloss-card-title" style="font-size:13px">Critical Limit 逸脱</div></div></div>
+      <div class="gloss-card-body"><div class="gloss-card-desc">CLを超えた状態。CCPの場合は即座に是正措置を発動し、当該ロットを保留・調査する。</div></div>
+    </div>
+  </div>
+
+  <div class="flow-sec-title" style="margin:20px 0 12px;font-size:11px;color:var(--tx3);font-family:var(--fm);letter-spacing:.07em;text-transform:uppercase;display:flex;align-items:center;gap:7px">HACCP 7原則 <span style="flex:1;height:1px;background:var(--rim);display:block"></span></div>
+  <div class="gloss-principle">
+    <div class="principle-grid">
+      <div class="p-row"><div class="p-num">1</div><div class="p-text"><strong>危害要因分析（HA）</strong> — 生物的・化学的・物理的危害を工程ごとに特定し、重大性と発生可能性を評価する</div></div>
+      <div class="p-row"><div class="p-num">2</div><div class="p-text"><strong>CCP の決定</strong> — 決定木（ディシジョンツリー）を使い、どの工程がCCPに該当するかを判断する</div></div>
+      <div class="p-row"><div class="p-num">3</div><div class="p-text"><strong>管理基準（CL）の設定</strong> — 各CCPに対して科学的根拠のある合格限界値（臨界限界値）を設ける</div></div>
+      <div class="p-row"><div class="p-num">4</div><div class="p-text"><strong>モニタリング手順の確立</strong> — 誰が・何を・どのくらいの頻度で・どうやって測定するかを明文化する</div></div>
+      <div class="p-row"><div class="p-num">5</div><div class="p-text"><strong>是正措置の確立</strong> — CL逸脱時に取るべき具体的な行動手順（保留・廃棄・原因調査）を事前に定める</div></div>
+      <div class="p-row"><div class="p-num">6</div><div class="p-text"><strong>検証手順の確立</strong> — HACCPシステムが有効に機能していることを定期的に確認・見直しする</div></div>
+      <div class="p-row"><div class="p-num">7</div><div class="p-text"><strong>文書化・記録保管</strong> — 全ての管理記録を適切に保管し、監査や問題発生時のトレーサビリティを確保する</div></div>
+    </div>
+  </div>
+
+  <div class="flow-sec-title" style="margin:20px 0 12px;font-size:11px;color:var(--tx3);font-family:var(--fm);letter-spacing:.07em;text-transform:uppercase;display:flex;align-items:center;gap:7px">専門用語集 <span style="flex:1;height:1px;background:var(--rim);display:block"></span></div>
+  <div class="term-grid">
+    <div class="term-card"><div class="term-word">CIP</div><div class="term-ja">定置洗浄</div><div class="term-desc">Clean In Place。タンクや配管を分解せずに内部を循環洗浄・殺菌する方式。ATPで洗浄効果を数値確認する。</div></div>
+    <div class="term-card"><div class="term-word">TPO</div><div class="term-ja">缶内総酸素量</div><div class="term-desc">Total Package Oxygen。缶充填時にヘッドスペースに残留する酸素量（ppb）。高いと酸化劣化・賞味期限短縮の原因。</div></div>
+    <div class="term-card"><div class="term-word">OG / FG</div><div class="term-ja">初期比重 / 終末比重</div><div class="term-desc">Original / Final Gravity。麦汁の糖濃度を示す比重。OGとFGの差からABV（アルコール度数）が算出される。</div></div>
+    <div class="term-card"><div class="term-word">IBU</div><div class="term-ja">国際苦味単位</div><div class="term-desc">International Bitterness Units。ホップ由来のイソα酸濃度を示す。ホップ添加量・タイミング・煮沸時間に依存する。</div></div>
+    <div class="term-card"><div class="term-word">DO / RLU</div><div class="term-ja">溶存酸素 / ATP発光量</div><div class="term-desc">Dissolved Oxygen（ppm）は酸化の主因。RLU（Relative Light Unit）はATP検査での清潔度指標。≤200RLUが合格。</div></div>
+    <div class="term-card"><div class="term-word">EBC</div><div class="term-ja">欧州醸造規格（濁度・色度）</div><div class="term-desc">European Brewery Convention。ビールの濁度・色度の国際標準単位。クリア系ビールは≤0.5 EBC。</div></div>
+    <div class="term-card"><div class="term-word">ABV</div><div class="term-ja">アルコール度数</div><div class="term-desc">Alcohol By Volume（%）。酒税区分・ラベル表示に直結。OG-FG差から推定式で計算し、実測との照合も行う。</div></div>
+    <div class="term-card"><div class="term-word">Lot / トレーサビリティ</div><div class="term-ja">ロット管理・追跡可能性</div><div class="term-desc">原材料の入荷Lotから製品出荷Lotまでを紐付けて追跡できる仕組み。問題発生時の迅速なリコール対応に必要。</div></div>
+    <div class="term-card"><div class="term-word">是正措置 / 有効性確認</div><div class="term-ja">CAPA</div><div class="term-desc">Corrective And Preventive Action。問題発生時に原因を特定・修正し、再発防止策が機能しているかを後日確認するプロセス。</div></div>
+  </div>
+
+</div>
+</div>
+
+<!-- ══ LIST PANEL ══ -->
+<div class="panel" id="panel-list">
+  <div class="list-toolbar">
+    <div><div class="lt-title">検査基準一覧</div><div class="lt-sub">クリックで詳細ページを開く</div></div>
+    <div class="search-wrap"><span class="search-icon">🔍</span><input type="text" id="searchInput" placeholder="項目名・工程を検索…" oninput="renderList()"></div>
+    <div class="filter-row">
+      <button class="filter-btn on" id="fb-all" onclick="applyFilter('all')">全て</button>
+      <button class="filter-btn" id="fb-ccp" onclick="applyFilter('CCP')">🔴 CCP</button>
+      <button class="filter-btn" id="fb-op" onclick="applyFilter('OP')">🔵 OP</button>
+      <button class="filter-btn" id="fb-q" onclick="applyFilter('Q')">🟣 Q</button>
+    </div>
+    <button class="btn" onclick="loadItems()">↺ 更新</button>
+    <button class="btn btn-p" onclick="openAddModal()">＋ 追加</button>
+  </div>
+  <div class="list-body" id="listBody">
+    <div class="list-loading"><span class="spin"></span>Notionから読み込み中…</div>
+  </div>
+</div>
+
+<!-- ══ DETAIL PANEL ══ -->
+<div class="panel" id="panel-detail">
+  <div class="detail-head">
+    <div class="dh-back" onclick="switchTab('list')">← 一覧に戻る</div>
+    <div class="dh-top">
+      <div style="flex:1">
+        <div class="dh-title" id="d-title">—</div>
+        <div class="dh-meta" id="d-meta"></div>
+      </div>
+      <div class="dh-actions">
+        <a id="d-notion-link" href="#" target="_blank" class="btn">Notionで開く ↗</a>
+        <button class="btn btn-p" onclick="openEditModal()">✏️ 編集</button>
+      </div>
+    </div>
+  </div>
+  <div class="detail-body" id="detailBody"></div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /body -->
+
+<!-- ADD/EDIT MODAL -->
+<div class="overlay" id="modal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modalTitle">検査項目を追加</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-g"><div class="field-label">検査項目名 <span class="field-req">*</span></div><input type="text" id="m-name" placeholder="例: 仕込み水 pH"></div>
+      <div class="f-row">
+        <div class="field-g"><div class="field-label">工程 <span class="field-req">*</span></div>
+          <select id="m-step">
+            <option value="">選択…</option>
+            <option>仕込み・糖化</option><option>煮沸・ホップ添加</option>
+            <option>冷却・酵母接種</option><option>発酵管理</option>
+            <option>貯酒・濾過</option><option>缶充填・密封</option><option>出荷前最終検査</option>
+          </select>
+        </div>
+        <div class="field-g"><div class="field-label">分類 <span class="field-req">*</span></div>
+          <select id="m-cls">
+            <option value="">選択…</option>
+            <option value="CCP">CCP（重要管理点）</option>
+            <option value="OP">OP（一般管理点）</option>
+            <option value="Q">Q（品質管理）</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-g"><div class="field-label">合格基準（テキスト）</div><input type="text" id="m-ok" placeholder="例: 5.2–5.6 / ≥90% / 変色なし"></div>
+      <div class="f-row">
+        <div class="field-g"><div class="field-label">合格 下限</div><input type="text" id="m-ok-lo" placeholder="5.2"></div>
+        <div class="field-g"><div class="field-label">合格 上限</div><input type="text" id="m-ok-hi" placeholder="5.6"></div>
+      </div>
+      <div class="f-row">
+        <div class="field-g"><div class="field-label">警告値 下限</div><input type="text" id="m-w-lo" placeholder="5.0"></div>
+        <div class="field-g"><div class="field-label">警告値 上限</div><input type="text" id="m-w-hi" placeholder="5.8"></div>
+      </div>
+      <div class="f-row">
+        <div class="field-g"><div class="field-label">NG 下限</div><input type="text" id="m-ng-lo" placeholder="4.8"></div>
+        <div class="field-g"><div class="field-label">NG 上限</div><input type="text" id="m-ng-hi" placeholder="6.0"></div>
+      </div>
+      <div class="f-row">
+        <div class="field-g"><div class="field-label">単位</div>
+          <select id="m-unit">
+            <option value="なし（定性）">— 定性</option>
+            <option>℃</option><option>pH</option><option>ppm</option><option>ppb</option>
+            <option>mL</option><option>MPa</option><option>%</option>
+            <option>CFU/mL</option><option>EBC</option><option>RLU</option>
+            <option>Vol</option><option>P（比重点）</option>
+          </select>
+        </div>
+        <div class="field-g"><div class="field-label">測定頻度</div><input type="text" id="m-freq" placeholder="仕込みごと / 30分ごと"></div>
+      </div>
+      <div class="field-g"><div class="field-label">測定方法</div><input type="text" id="m-method" placeholder="デジタルpHメーター（校正済）"></div>
+      <div class="field-g"><div class="field-label">NG時処置</div><textarea id="m-action" placeholder="仕込み停止→水質是正→再測定"></textarea></div>
+      <div class="f-row">
+        <div class="field-g"><div class="field-label">改定バージョン</div><input type="text" id="m-ver" value="v1.0"></div>
+        <div class="field-g"><div class="field-label">変更理由</div><input type="text" id="m-reason" placeholder="新規作成 / 基準値見直し"></div>
+      </div>
+      <div class="field-g"><div class="field-label">変更者名</div><input type="text" id="m-author" placeholder="山田 太郎"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeModal()">キャンセル</button>
+      <button class="btn btn-p" id="modal-save-btn" onclick="saveItem()">💾 Notionに保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="saving-over" id="savingOver">
+  <div class="saving-box"><strong>Notionと同期中…</strong><span><span class="spin"></span>少々お待ちください</span></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="js/app.js"></script>
+
+</body>
+</html>
