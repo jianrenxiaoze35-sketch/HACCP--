@@ -932,7 +932,7 @@ const HIST_ID = HISTORY_DB_ID;
 
 // ▼ GASデプロイURLをここに貼る（必須）
 // 例: "https://script.google.com/macros/s/AKfy.../exec"
-const GATEWAY_URL = "https://script.google.com/macros/s/AKfycbxbE4vlfExJG8byEu6VL90ZlE4EQZPZYtItowy1QbM/dev";
+const GATEWAY_URL = "https://script.google.com/macros/s/AKfycbxbE4vlfExJG8byEu6VL90ZlE4EQZPZYtItowy1QbM/exec";
 
 // ═══════ STATE ═══════
 let items = [], currentFilter = "all", currentStepFilter = "all", editingItem = null;
@@ -961,37 +961,51 @@ const STEP_COLOR = {"仕込み・糖化":"#e8c020","煮沸・ホップ添加":"#
 // ══════════════════════════════════════════════════════════════
 //  Notion API レイヤー
 //  ─────────────────────────────────────────────────────────────
-//  GATEWAY_URL 設定済み → GAS経由（action形式でPOST）
-//  未設定        → Claude MCP fallback（開発・デモ用）
+//  GATEWAY_URL 設定済み → GAS経由（すべてGETで通信・CORS回避）
+//  未設定        → Claude MCP fallback
 //
-//  【GAS通信プロトコル ver3.0】
-//  すべてのリクエストは POST { action, ...params } で統一。
-//  GAS は受け取ったものをそのまま Notion API に流して返すだけ。
+//  【GAS通信プロトコル ver4.0 — GET統一】
+//  GASウェブアプリはPOSTのCORSヘッダーを付与できないため
+//  すべてのリクエストをGETクエリパラメータで渡す。
+//  GETはCORSプリフライトが発生しないので確実に動作する。
+//
+//  GET {GATEWAY_URL}?action=queryAll&dbId=xxx
+//  GET {GATEWAY_URL}?action=relay&method=POST&path=/v1/pages&body={JSON}
+//  GET {GATEWAY_URL}?action=ping
 // ══════════════════════════════════════════════════════════════
 
-// --- GAS経由 汎用中継（relay action）---
-async function _gasRelay(method, path, body) {
-  const r = await fetch(GATEWAY_URL, {
-    method : "POST",
-    headers: { "Content-Type": "application/json" },
-    body   : JSON.stringify({ action: "relay", method, path, body })
-  });
-  if (!r.ok) throw new Error("GAS relay HTTP " + r.status);
-  return r.json();
+// GAS GETリクエスト共通関数
+async function _gasGet(params) {
+  const qs  = Object.entries(params)
+    .map(([k, v]) => k + "=" + encodeURIComponent(typeof v === "object" ? JSON.stringify(v) : v))
+    .join("&");
+  const url = GATEWAY_URL + "?" + qs;
+  const r   = await fetch(url);
+  if (!r.ok) throw new Error("GAS HTTP " + r.status);
+  const d = await r.json();
+  if (d.ok === false) throw new Error("GAS error: " + (d.error || "unknown"));
+  return d;
 }
 
-// --- GAS経由 全件クエリ（queryAll action）---
-//     GASがページネーションを吸収して results[] を返してくれる
-async function _gasQueryAll(dbId, filter) {
-  const r = await fetch(GATEWAY_URL, {
-    method : "POST",
-    headers: { "Content-Type": "application/json" },
-    body   : JSON.stringify({ action: "queryAll", dbId, filter: filter||null })
-  });
-  if (!r.ok) throw new Error("GAS queryAll HTTP " + r.status);
-  const d = await r.json();
-  if (!d.ok) throw new Error("GAS queryAll error: " + (d.error||"unknown"));
+// 全件クエリ（GASがページネーション吸収）
+async function _gasQueryAll(dbId) {
+  const d = await _gasGet({ action: "queryAll", dbId });
   return d.results || [];
+}
+
+// 単発リレー（POST/PATCH/GET）
+async function _gasRelay(method, path, body) {
+  const params = { action: "relay", method, path };
+  if (body) params.body = JSON.stringify(body);
+  return _gasGet(params);
+}
+
+// 疎通確認
+async function gasPing() {
+  try {
+    const d = await _gasGet({ action: "ping" });
+    return d.ok === true;
+  } catch { return false; }
 }
 
 // --- 公開API（アプリ内から呼ぶ）---
@@ -1010,10 +1024,9 @@ async function notionGet(path) {
   return _gasRelay("GET", path, null);
 }
 
-// ページネーション付き全件クエリ
-// GATEWAY_URL設定済みならGASに全件処理を委譲（1リクエストで完結）
-async function notionQueryAll(dbId, filter) {
-  if (GATEWAY_URL) return _gasQueryAll(dbId, filter);
+// 全件取得（GAS経由 or MCP fallback）
+async function notionQueryAll(dbId) {
+  if (GATEWAY_URL) return _gasQueryAll(dbId);
   return _claudeQueryAll(dbId);
 }
 
@@ -1190,8 +1203,20 @@ async function callClaudeObj(prompt, max=2000) {
 async function loadItems() {
   document.getElementById("listBody").innerHTML =
     `<div class="list-loading"><span class="spin"></span>Notionから読み込み中…</div>`;
+
+  // GATEWAY_URL設定済みの場合、先にping確認
+  if (GATEWAY_URL) {
+    const alive = await gasPing();
+    if (!alive) {
+      document.getElementById("listBody").innerHTML =
+        `<div class="empty-state">⚠️ GAS Gatewayに接続できません。<br>
+         <small style="color:var(--tx3)">GASが「全員にアクセス可」でデプロイされているか確認してください。</small></div>`;
+      setLed(false);
+      return;
+    }
+  }
+
   try {
-    // アプリが直接Notionから全件取得（GAS gateway 経由 or MCP fallback）
     const pages = await notionQueryAll(MASTER_DB_ID);
     items = pages.map(p => {
       const pr = p.properties || {};
@@ -1215,12 +1240,14 @@ async function loadItems() {
         reason:  nText(pr["改定理由"]),
       };
     }).filter(i => i.name);
+
     setLed(true);
     updateSidebarCounts();
     renderList();
   } catch(e) {
-    toast("読み込みエラー: "+e.message,"er");
-    document.getElementById("listBody").innerHTML = `<div class="empty-state">⚠️ ${e.message}</div>`;
+    toast("読み込みエラー: " + e.message, "er");
+    document.getElementById("listBody").innerHTML =
+      `<div class="empty-state">⚠️ ${esc(e.message)}</div>`;
     setLed(false);
   }
 }
