@@ -959,37 +959,53 @@ const STEP_COLOR = {"仕込み・糖化":"#e8c020","煮沸・ホップ添加":"#
 // ═══════════════════════════════════════════════════════════
 
 // ══════════════════════════════════════════════════════════════
-//  Notion API レイヤー
+//  Notion API レイヤー  —  JSONP方式（CORS完全回避）
 //  ─────────────────────────────────────────────────────────────
-//  GATEWAY_URL 設定済み → GAS経由（すべてGETで通信・CORS回避）
-//  未設定        → Claude MCP fallback
+//  GASウェブアプリは302リダイレクトを返し、
+//  リダイレクト先にCORSヘッダーがないためfetchがブロックされる。
 //
-//  【GAS通信プロトコル ver4.0 — GET統一】
-//  GASウェブアプリはPOSTのCORSヘッダーを付与できないため
-//  すべてのリクエストをGETクエリパラメータで渡す。
-//  GETはCORSプリフライトが発生しないので確実に動作する。
-//
-//  GET {GATEWAY_URL}?action=queryAll&dbId=xxx
-//  GET {GATEWAY_URL}?action=relay&method=POST&path=/v1/pages&body={JSON}
-//  GET {GATEWAY_URL}?action=ping
+//  解決策：scriptタグ動的挿入（JSONP）
+//  scriptタグはCORSの制約を受けないため確実に動作する。
+//  GASに ?callback=xxx を付けると xxx(JSON) で返ってくる。
 // ══════════════════════════════════════════════════════════════
 
-// GAS GETリクエスト共通関数
-async function _gasGet(params) {
-  const qs  = Object.entries(params)
-    .map(([k, v]) => k + "=" + encodeURIComponent(typeof v === "object" ? JSON.stringify(v) : v))
-    .join("&");
-  const url = GATEWAY_URL + "?" + qs;
-  const r   = await fetch(url);
-  if (!r.ok) throw new Error("GAS HTTP " + r.status);
-  const d = await r.json();
-  if (d.ok === false) throw new Error("GAS error: " + (d.error || "unknown"));
-  return d;
+// JSONP呼び出しコア
+function _jsonp(params) {
+  return new Promise((resolve, reject) => {
+    const cbName = "_gcb" + Date.now() + Math.floor(Math.random()*9999);
+    const timeout = setTimeout(() => {
+      delete window[cbName];
+      script.remove();
+      reject(new Error("GAS timeout"));
+    }, 30000);
+
+    window[cbName] = (data) => {
+      clearTimeout(timeout);
+      delete window[cbName];
+      script.remove();
+      if (data.ok === false) reject(new Error(data.error || "GAS error"));
+      else resolve(data);
+    };
+
+    const qs = Object.entries({ ...params, callback: cbName })
+      .map(([k, v]) => k + "=" + encodeURIComponent(
+        typeof v === "object" ? JSON.stringify(v) : String(v)
+      )).join("&");
+
+    const script = document.createElement("script");
+    script.src = GATEWAY_URL + "?" + qs;
+    script.onerror = () => {
+      clearTimeout(timeout);
+      delete window[cbName];
+      reject(new Error("GAS script load error"));
+    };
+    document.head.appendChild(script);
+  });
 }
 
 // 全件クエリ（GASがページネーション吸収）
 async function _gasQueryAll(dbId) {
-  const d = await _gasGet({ action: "queryAll", dbId });
+  const d = await _jsonp({ action: "queryAll", dbId });
   return d.results || [];
 }
 
@@ -997,18 +1013,18 @@ async function _gasQueryAll(dbId) {
 async function _gasRelay(method, path, body) {
   const params = { action: "relay", method, path };
   if (body) params.body = JSON.stringify(body);
-  return _gasGet(params);
+  return _jsonp(params);
 }
 
 // 疎通確認
 async function gasPing() {
   try {
-    const d = await _gasGet({ action: "ping" });
+    const d = await _jsonp({ action: "ping" });
     return d.ok === true;
   } catch { return false; }
 }
 
-// --- 公開API（アプリ内から呼ぶ）---
+// --- 公開API ---
 async function notionPost(path, body) {
   if (!GATEWAY_URL) return _claudeFallback("POST", path, body);
   return _gasRelay("POST", path, body);
@@ -1024,7 +1040,7 @@ async function notionGet(path) {
   return _gasRelay("GET", path, null);
 }
 
-// 全件取得（GAS経由 or MCP fallback）
+// 全件取得
 async function notionQueryAll(dbId) {
   if (GATEWAY_URL) return _gasQueryAll(dbId);
   return _claudeQueryAll(dbId);
