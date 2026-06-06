@@ -52,31 +52,6 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 .tb-tab.on{background:var(--s3);color:var(--tx);box-shadow:0 1px 3px rgba(0,0,0,.4)}
 .tb-tab:hover:not(.on){color:var(--tx)}
 
-.tb-mini{
-  display:flex;align-items:center;
-  max-width:240px;
-  padding:5px 10px;
-  border-radius:var(--r2);
-  border:1px solid var(--rim);
-  background:var(--s2);
-  color:var(--tx3);
-  font-family:var(--fm);
-  font-size:10px;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-.tb-mini.ok{
-  color:var(--gr);
-  border-color:var(--gr-b);
-  background:var(--gr-l);
-}
-.tb-mini.warn{
-  color:var(--amber);
-  border-color:var(--amber-b);
-  background:var(--amber-l);
-}
-
 /* ── LAYOUT ── */
 .body{display:flex;flex:1;overflow:hidden}
 
@@ -416,8 +391,6 @@ select option{background:var(--s2)}
     <div class="tb-tab" onclick="switchTab('list')">📋 基準一覧</div>
     <div class="tb-tab" id="tab-detail" style="display:none" onclick="switchTab('detail')">📄 詳細ページ</div>
   </div>
-  <button class="btn" onclick="openGatewayModal()">⚙️ 接続設定</button>
-  <div class="tb-mini warn" id="gwState">GAS: 未設定</div>
   <div class="tb-led"><div class="led" id="led"></div><span id="ledTx">…</span></div>
 </div>
 
@@ -633,7 +606,7 @@ select option{background:var(--s2)}
         <div style="font-size:11px;font-weight:600;color:var(--amber);font-family:var(--fm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">WRITE（書き込み）</div>
         <div style="display:flex;flex-direction:column;gap:7px">
           <div style="display:flex;gap:8px;font-size:12px;color:var(--tx2)"><div style="color:var(--amber);flex-shrink:0">←</div>「編集」「＋追加」で保存すると🔬 基準マスタDBを更新</div>
-          <div style="display:flex;gap:8px;font-size:12px;color:var(--tx2)"><div style="color:var(--amber);flex-shrink:0">←</div>同時に📋 変更履歴DBに「変更前→変更後」「変更者」「変更理由」「日時」「版数」を自動記録</div>
+          <div style="display:flex;gap:8px;font-size:12px;color:var(--tx2)"><div style="color:var(--amber);flex-shrink:0">←</div>同時に📋 変更履歴DBに変更差分・理由・日時・版数を自動記録</div>
           <div style="display:flex;gap:8px;font-size:12px;color:var(--tx2)"><div style="color:var(--amber);flex-shrink:0">←</div>詳細ページの「メモ保存」で測定方法・備考フィールドに書き込み</div>
         </div>
       </div>
@@ -733,4 +706,1637 @@ select option{background:var(--s2)}
   </div>
 
   <!-- QUICK START BTN -->
-  <div style="text-align:center;padding
+  <div style="text-align:center;padding:10px 0 4px">
+    <button class="btn btn-p" style="padding:10px 28px;font-size:13px" onclick="switchTab('list')">📋 基準一覧を開く →</button>
+    <button class="btn" style="padding:10px 20px;font-size:13px;margin-left:8px" onclick="switchTab('glossary')">📖 用語解説を読む</button>
+  </div>
+
+</div>
+</div>
+<!-- ══ END HOWTO PANEL ══ -->
+
+<!-- ══ GLOSSARY PANEL ══ -->
+<div class="panel" id="panel-glossary">
+<div class="gloss-wrap">
+
+  <div class="gloss-hero">
+    <div class="gloss-hero-label">HACCP とは</div>
+    <div class="gloss-hero-title">Hazard Analysis and Critical Control Points</div>
+    <div class="gloss-hero-body">
+      食品の安全性を確保するための国際標準的な管理システム。<strong>「どこで何が危険になるか」を事前に分析し</strong>、その重要な制御点（CCP）を継続的に監視・記録する手法。
+      製造工程全体を「危害が発生するリスク」「後工程で除去できるか」の2軸で評価し、科学的根拠に基づく基準を設定する。
+      <br><br>日本では2021年より<strong>食品衛生法に基づくHACCP義務化</strong>が完全施行されており、規模を問わず全ての食品事業者に適用される。
+    </div>
+  </div>
+
+  <div class="flow-sec-title" style="margin-bottom:12px;font-size:11px;color:var(--tx3);font-family:var(--fm);letter-spacing:.07em;text-transform:uppercase;display:flex;align-items:center;gap:7px">分類の違い — CCP / OP / Q <span style="flex:1;height:1px;background:var(--rim);display:block"></span></div>
+
+  <div class="gloss-grid">
+    <div class="gloss-card">
+      <div class="gloss-card-head">
+        <div>
+          <div class="gloss-card-badge b-ccp">CCP</div>
+        </div>
+        <div>
+          <div class="gloss-card-title">重要管理点</div>
+          <div class="gloss-card-subtitle">Critical Control Point</div>
+        </div>
+      </div>
+      <div class="gloss-card-body">
+        <div class="gloss-card-desc">食品安全上の<strong style="color:var(--red)">危害を防止・除去・許容範囲内に低減</strong>するために必須の工程。<br>ここが崩れると後工程での回復が不可能。監査で最優先に確認される。</div>
+        <div style="font-size:10px;color:var(--tx3);font-family:var(--fm);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">本DBの例</div>
+        <div class="gloss-card-examples">
+          <div class="ex-row"><div class="ex-dot"></div>煮沸温度（殺菌の唯一の機会）</div>
+          <div class="ex-row"><div class="ex-dot"></div>発酵タンクATP（CIP後の清潔確認）</div>
+          <div class="ex-row"><div class="ex-dot"></div>ヘッドスペースDO・シーム強度（缶充填）</div>
+          <div class="ex-row"><div class="ex-dot"></div>アレルゲン表示確認（食品表示法）</div>
+        </div>
+        <div style="margin-top:10px;padding:8px 10px;background:var(--red-l);border:1px solid var(--red-b);border-radius:var(--r3);font-size:11px;color:var(--red)">
+          ⚠️ CLを逸脱したら即座に是正措置が必要。記録の欠落も違反とみなされる。
+        </div>
+      </div>
+    </div>
+
+    <div class="gloss-card">
+      <div class="gloss-card-head">
+        <div>
+          <div class="gloss-card-badge b-op">OP</div>
+        </div>
+        <div>
+          <div class="gloss-card-title">一般管理点</div>
+          <div class="gloss-card-subtitle">Operational Pre-Requisite Program</div>
+        </div>
+      </div>
+      <div class="gloss-card-body">
+        <div class="gloss-card-desc">食品安全に関連するが、<strong style="color:var(--blue)">CCPほど絶対的ではない</strong>管理点。逸脱しても後工程で補正や回収の余地がある場合が多い。<br>PRPと組み合わせてGMP（適正製造規範）を構成する。</div>
+        <div style="font-size:10px;color:var(--tx3);font-family:var(--fm);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">本DBの例</div>
+        <div class="gloss-card-examples">
+          <div class="ex-row"><div class="ex-dot" style="background:var(--blue)"></div>仕込み水温度（レシピ±2℃ 後で調整可）</div>
+          <div class="ex-row"><div class="ex-dot" style="background:var(--blue)"></div>冷却所要時間（60分以内）</div>
+          <div class="ex-row"><div class="ex-dot" style="background:var(--blue)"></div>官能評価・異臭チェック</div>
+          <div class="ex-row"><div class="ex-dot" style="background:var(--blue)"></div>貯酒温度（0–4℃）</div>
+        </div>
+        <div style="margin-top:10px;padding:8px 10px;background:var(--blue-l);border:1px solid var(--blue-b);border-radius:var(--r3);font-size:11px;color:var(--blue)">
+          ℹ️ 逸脱時は記録＋上長報告。製品は後工程での確認後に判断。
+        </div>
+      </div>
+    </div>
+
+    <div class="gloss-card">
+      <div class="gloss-card-head">
+        <div>
+          <div class="gloss-card-badge b-q">Q</div>
+        </div>
+        <div>
+          <div class="gloss-card-title">品質管理点</div>
+          <div class="gloss-card-subtitle">Quality Control Point</div>
+        </div>
+      </div>
+      <div class="gloss-card-body">
+        <div class="gloss-card-desc">食品安全への直接的影響は低いが、<strong style="color:var(--pur)">製品品質・風味・外観</strong>に影響する管理点。HACCPの7原則には含まれないが、ブランド品質の維持に不可欠。</div>
+        <div style="font-size:10px;color:var(--tx3);font-family:var(--fm);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">本DBの例</div>
+        <div class="gloss-card-examples">
+          <div class="ex-row"><div class="ex-dot" style="background:var(--pur)"></div>麦汁OG・FG（目標比重±2P）</div>
+          <div class="ex-row"><div class="ex-dot" style="background:var(--pur)"></div>炭酸ガス圧（CO₂ Vol）</div>
+          <div class="ex-row"><div class="ex-dot" style="background:var(--pur)"></div>濾過後濁度（EBC値）</div>
+          <div class="ex-row"><div class="ex-dot" style="background:var(--pur)"></div>発酵後ABV（推定アルコール度数）</div>
+        </div>
+        <div style="margin-top:10px;padding:8px 10px;background:var(--pur-l);border:1px solid var(--pur-b);border-radius:var(--r3);font-size:11px;color:var(--pur)">
+          ✦ 逸脱時は品質低下として記録。安全問題ではないが官能評価強化を行う。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-sec-title" style="margin:20px 0 12px;font-size:11px;color:var(--tx3);font-family:var(--fm);letter-spacing:.07em;text-transform:uppercase;display:flex;align-items:center;gap:7px">判定基準の3段階 <span style="flex:1;height:1px;background:var(--rim);display:block"></span></div>
+  <div class="gloss-grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
+    <div class="gloss-card">
+      <div class="gloss-card-head"><div class="gloss-card-badge b-ok">合格 CL</div><div><div class="gloss-card-title" style="font-size:13px">Critical Limit（臨界限界値）</div></div></div>
+      <div class="gloss-card-body"><div class="gloss-card-desc">この範囲内であれば製品は安全・品質適合とみなされる数値範囲。科学的根拠に基づき設定。</div></div>
+    </div>
+    <div class="gloss-card">
+      <div class="gloss-card-head"><div class="gloss-card-badge b-warn">警告値</div><div><div class="gloss-card-title" style="font-size:13px">Warning Level（運用限界値）</div></div></div>
+      <div class="gloss-card-body"><div class="gloss-card-desc">CLに近づいているが未逸脱の状態。上長報告・操作調整が必要。記録に残し次の測定で確認する。</div></div>
+    </div>
+    <div class="gloss-card">
+      <div class="gloss-card-head"><div class="gloss-card-badge b-ng">NG ライン</div><div><div class="gloss-card-title" style="font-size:13px">Critical Limit 逸脱</div></div></div>
+      <div class="gloss-card-body"><div class="gloss-card-desc">CLを超えた状態。CCPの場合は即座に是正措置を発動し、当該ロットを保留・調査する。</div></div>
+    </div>
+  </div>
+
+  <div class="flow-sec-title" style="margin:20px 0 12px;font-size:11px;color:var(--tx3);font-family:var(--fm);letter-spacing:.07em;text-transform:uppercase;display:flex;align-items:center;gap:7px">HACCP 7原則 <span style="flex:1;height:1px;background:var(--rim);display:block"></span></div>
+  <div class="gloss-principle">
+    <div class="principle-grid">
+      <div class="p-row"><div class="p-num">1</div><div class="p-text"><strong>危害要因分析（HA）</strong> — 生物的・化学的・物理的危害を工程ごとに特定し、重大性と発生可能性を評価する</div></div>
+      <div class="p-row"><div class="p-num">2</div><div class="p-text"><strong>CCP の決定</strong> — 決定木（ディシジョンツリー）を使い、どの工程がCCPに該当するかを判断する</div></div>
+      <div class="p-row"><div class="p-num">3</div><div class="p-text"><strong>管理基準（CL）の設定</strong> — 各CCPに対して科学的根拠のある合格限界値（臨界限界値）を設ける</div></div>
+      <div class="p-row"><div class="p-num">4</div><div class="p-text"><strong>モニタリング手順の確立</strong> — 誰が・何を・どのくらいの頻度で・どうやって測定するかを明文化する</div></div>
+      <div class="p-row"><div class="p-num">5</div><div class="p-text"><strong>是正措置の確立</strong> — CL逸脱時に取るべき具体的な行動手順（保留・廃棄・原因調査）を事前に定める</div></div>
+      <div class="p-row"><div class="p-num">6</div><div class="p-text"><strong>検証手順の確立</strong> — HACCPシステムが有効に機能していることを定期的に確認・見直しする</div></div>
+      <div class="p-row"><div class="p-num">7</div><div class="p-text"><strong>文書化・記録保管</strong> — 全ての管理記録を適切に保管し、監査や問題発生時のトレーサビリティを確保する</div></div>
+    </div>
+  </div>
+
+  <div class="flow-sec-title" style="margin:20px 0 12px;font-size:11px;color:var(--tx3);font-family:var(--fm);letter-spacing:.07em;text-transform:uppercase;display:flex;align-items:center;gap:7px">専門用語集 <span style="flex:1;height:1px;background:var(--rim);display:block"></span></div>
+  <div class="term-grid">
+    <div class="term-card"><div class="term-word">CIP</div><div class="term-ja">定置洗浄</div><div class="term-desc">Clean In Place。タンクや配管を分解せずに内部を循環洗浄・殺菌する方式。ATPで洗浄効果を数値確認する。</div></div>
+    <div class="term-card"><div class="term-word">TPO</div><div class="term-ja">缶内総酸素量</div><div class="term-desc">Total Package Oxygen。缶充填時にヘッドスペースに残留する酸素量（ppb）。高いと酸化劣化・賞味期限短縮の原因。</div></div>
+    <div class="term-card"><div class="term-word">OG / FG</div><div class="term-ja">初期比重 / 終末比重</div><div class="term-desc">Original / Final Gravity。麦汁の糖濃度を示す比重。OGとFGの差からABV（アルコール度数）が算出される。</div></div>
+    <div class="term-card"><div class="term-word">IBU</div><div class="term-ja">国際苦味単位</div><div class="term-desc">International Bitterness Units。ホップ由来のイソα酸濃度を示す。ホップ添加量・タイミング・煮沸時間に依存する。</div></div>
+    <div class="term-card"><div class="term-word">DO / RLU</div><div class="term-ja">溶存酸素 / ATP発光量</div><div class="term-desc">Dissolved Oxygen（ppm）は酸化の主因。RLU（Relative Light Unit）はATP検査での清潔度指標。≤200RLUが合格。</div></div>
+    <div class="term-card"><div class="term-word">EBC</div><div class="term-ja">欧州醸造規格（濁度・色度）</div><div class="term-desc">European Brewery Convention。ビールの濁度・色度の国際標準単位。クリア系ビールは≤0.5 EBC。</div></div>
+    <div class="term-card"><div class="term-word">ABV</div><div class="term-ja">アルコール度数</div><div class="term-desc">Alcohol By Volume（%）。酒税区分・ラベル表示に直結。OG-FG差から推定式で計算し、実測との照合も行う。</div></div>
+    <div class="term-card"><div class="term-word">Lot / トレーサビリティ</div><div class="term-ja">ロット管理・追跡可能性</div><div class="term-desc">原材料の入荷Lotから製品出荷Lotまでを紐付けて追跡できる仕組み。問題発生時の迅速なリコール対応に必要。</div></div>
+    <div class="term-card"><div class="term-word">是正措置 / 有効性確認</div><div class="term-ja">CAPA</div><div class="term-desc">Corrective And Preventive Action。問題発生時に原因を特定・修正し、再発防止策が機能しているかを後日確認するプロセス。</div></div>
+  </div>
+
+</div>
+</div>
+
+<!-- ══ LIST PANEL ══ -->
+<div class="panel" id="panel-list">
+  <div class="list-toolbar">
+    <div><div class="lt-title">検査基準一覧</div><div class="lt-sub">クリックで詳細ページを開く</div></div>
+    <div class="search-wrap"><span class="search-icon">🔍</span><input type="text" id="searchInput" placeholder="項目名・工程を検索…" oninput="renderList()"></div>
+    <div class="filter-row">
+      <button class="filter-btn on" id="fb-all" onclick="applyFilter('all')">全て</button>
+      <button class="filter-btn" id="fb-ccp" onclick="applyFilter('CCP')">🔴 CCP</button>
+      <button class="filter-btn" id="fb-op" onclick="applyFilter('OP')">🔵 OP</button>
+      <button class="filter-btn" id="fb-q" onclick="applyFilter('Q')">🟣 Q</button>
+    </div>
+    <button class="btn" onclick="loadItems()">↺ 更新</button>
+    <button class="btn btn-p" onclick="openAddModal()">＋ 追加</button>
+  </div>
+  <div class="list-body" id="listBody">
+    <div class="list-loading"><span class="spin"></span>Notionから読み込み中…</div>
+  </div>
+</div>
+
+<!-- ══ DETAIL PANEL ══ -->
+<div class="panel" id="panel-detail">
+  <div class="detail-head">
+    <div class="dh-back" onclick="switchTab('list')">← 一覧に戻る</div>
+    <div class="dh-top">
+      <div style="flex:1">
+        <div class="dh-title" id="d-title">—</div>
+        <div class="dh-meta" id="d-meta"></div>
+      </div>
+      <div class="dh-actions">
+        <a id="d-notion-link" href="#" target="_blank" class="btn">Notionで開く ↗</a>
+        <button class="btn btn-p" onclick="openEditModal()">✏️ 編集</button>
+      </div>
+    </div>
+  </div>
+  <div class="detail-body" id="detailBody"></div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /body -->
+
+<!-- ADD/EDIT MODAL -->
+<div class="overlay" id="modal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modalTitle">検査項目を追加</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-g"><div class="field-label">検査項目名 <span class="field-req">*</span></div><input type="text" id="m-name" placeholder="例: 仕込み水 pH"></div>
+      <div class="f-row">
+        <div class="field-g"><div class="field-label">工程 <span class="field-req">*</span></div>
+          <select id="m-step">
+            <option value="">選択…</option>
+            <option>仕込み・糖化</option><option>煮沸・ホップ添加</option>
+            <option>冷却・酵母接種</option><option>発酵管理</option>
+            <option>貯酒・濾過</option><option>缶充填・密封</option><option>出荷前最終検査</option>
+          </select>
+        </div>
+        <div class="field-g"><div class="field-label">分類 <span class="field-req">*</span></div>
+          <select id="m-cls">
+            <option value="">選択…</option>
+            <option value="CCP">CCP（重要管理点）</option>
+            <option value="OP">OP（一般管理点）</option>
+            <option value="Q">Q（品質管理）</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-g"><div class="field-label">合格基準（テキスト）</div><input type="text" id="m-ok" placeholder="例: 5.2–5.6 / ≥90% / 変色なし"></div>
+      <div class="f-row">
+        <div class="field-g"><div class="field-label">合格 下限</div><input type="text" id="m-ok-lo" placeholder="5.2"></div>
+        <div class="field-g"><div class="field-label">合格 上限</div><input type="text" id="m-ok-hi" placeholder="5.6"></div>
+      </div>
+      <div class="f-row">
+        <div class="field-g"><div class="field-label">警告値 下限</div><input type="text" id="m-w-lo" placeholder="5.0"></div>
+        <div class="field-g"><div class="field-label">警告値 上限</div><input type="text" id="m-w-hi" placeholder="5.8"></div>
+      </div>
+      <div class="f-row">
+        <div class="field-g"><div class="field-label">NG 下限</div><input type="text" id="m-ng-lo" placeholder="4.8"></div>
+        <div class="field-g"><div class="field-label">NG 上限</div><input type="text" id="m-ng-hi" placeholder="6.0"></div>
+      </div>
+      <div class="f-row">
+        <div class="field-g"><div class="field-label">単位</div>
+          <select id="m-unit">
+            <option value="なし（定性）">— 定性</option>
+            <option>℃</option><option>pH</option><option>ppm</option><option>ppb</option>
+            <option>mL</option><option>MPa</option><option>%</option>
+            <option>CFU/mL</option><option>EBC</option><option>RLU</option>
+            <option>Vol</option><option>P（比重点）</option>
+          </select>
+        </div>
+        <div class="field-g"><div class="field-label">測定頻度</div><input type="text" id="m-freq" placeholder="仕込みごと / 30分ごと"></div>
+      </div>
+      <div class="field-g"><div class="field-label">測定方法</div><input type="text" id="m-method" placeholder="デジタルpHメーター（校正済）"></div>
+      <div class="field-g"><div class="field-label">NG時処置</div><textarea id="m-action" placeholder="仕込み停止→水質是正→再測定"></textarea></div>
+      <div class="f-row">
+        <div class="field-g"><div class="field-label">改定バージョン</div><input type="text" id="m-ver" value="v1.0"></div>
+        <div class="field-g"><div class="field-label">変更理由</div><input type="text" id="m-reason" placeholder="新規作成 / 基準値見直し"></div>
+      </div>
+      <div class="field-g"><div class="field-label">変更者名</div><input type="text" id="m-author" placeholder="山田 太郎"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeModal()">キャンセル</button>
+      <button class="btn btn-p" id="modal-save-btn" onclick="saveItem()">💾 Notionに保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="saving-over" id="savingOver">
+  <div class="saving-box"><strong>Notionと同期中…</strong><span><span class="spin"></span>少々お待ちください</span></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- ── DEBUG PANEL ── -->
+<div class="dbg-toggle" onclick="toggleDebug()" id="dbgToggle">🔧 DEBUG</div>
+<div id="dbg-panel">
+  <div id="dbg-toolbar">
+    <span id="dbg-title">🔧 DEBUG LOG</span>
+    <button class="dbg-btn run" onclick="runDebugAll()">▶ 全テスト実行</button>
+    <button class="dbg-btn" onclick="runPingTest()">Ping</button>
+    <button class="dbg-btn" onclick="runQueryTest()">QueryAll</button>
+    <button class="dbg-btn" onclick="runRelayTest()">Relay Test</button>
+    <button class="dbg-btn" onclick="dbgClear()">クリア</button>
+    <button class="dbg-btn" onclick="toggleDebug()" style="margin-left:auto">✕ 閉じる</button>
+  </div>
+  <div id="dbg-log"></div>
+</div>
+
+<script>
+// ═══════ CONFIG ═══════
+const MASTER_DB_ID  = "1c4c6bb7-cbfb-4a4b-bce8-461f7b28ee2e";
+const HISTORY_DB_ID = "8177402a-8eb0-4c18-b66b-5bed66dcb3b7";
+const NOTION_BASE   = "https://app.notion.com/p/";
+
+// 後方互換
+const DB_ID   = MASTER_DB_ID;
+const HIST_ID = HISTORY_DB_ID;
+
+// ▼ GASデプロイURLをここに貼る（必須）
+// 例: "https://script.google.com/macros/s/AKfy.../exec"
+const GATEWAY_URL = "https://script.google.com/macros/s/AKfycbxbE4vlfExJG8byEu6VL90ZlE4EQZPZYtItowy1QbM/exec";
+
+// ═══════ STATE ═══════
+let items = [], currentFilter = "all", currentStepFilter = "all", editingItem = null;
+const localNotes = {};
+
+// ═══════ FLOW DATA ═══════
+const STEPS = ["仕込み・糖化","煮沸・ホップ添加","冷却・酵母接種","発酵管理","貯酒・濾過","缶充填・密封","出荷前最終検査"];
+const STEP_COLOR = {"仕込み・糖化":"#e8c020","煮沸・ホップ添加":"#e07020","冷却・酵母接種":"#3d7de8","発酵管理":"#8b5cf6","貯酒・濾過":"#24c97e","缶充填・密封":"#e04545","出荷前最終検査":"#535d7f"};
+
+// ═══════════════════════════════════════════════════════════
+//  Notion 直接 API レイヤー
+//  ─────────────────────────────────────────────────────────
+//  GATEWAY_URL が設定されている → GAS経由でNotion APIを叩く
+//  未設定 → Claude MCP経由（開発・デモ用）
+//
+//  【GAS経由の通信フロー】
+//    アプリ  →  (fetch)  →  GAS doPost/doGet
+//    GAS     →  (UrlFetch) → Notion API
+//    Notion  →  (response) → GAS
+//    GAS     →  (JSON)  → アプリ
+//
+//  アプリは記録・ログ・履歴をすべて自分でNotionに書く。
+//  GASはリクエストを透過するだけ。
+// ═══════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════
+//  Notion API レイヤー  —  JSONP方式（CORS完全回避）
+//  ─────────────────────────────────────────────────────────────
+//  GASウェブアプリは302リダイレクトを返し、
+//  リダイレクト先にCORSヘッダーがないためfetchがブロックされる。
+//
+//  解決策：scriptタグ動的挿入（JSONP）
+//  scriptタグはCORSの制約を受けないため確実に動作する。
+//  GASに ?callback=xxx を付けると xxx(JSON) で返ってくる。
+// ══════════════════════════════════════════════════════════════
+
+// JSONP呼び出しコア
+function _jsonp(params) {
+  return new Promise((resolve, reject) => {
+    const cbName = "_gcb" + Date.now() + Math.floor(Math.random()*9999);
+    const qs = Object.entries({ ...params, callback: cbName })
+      .map(([k, v]) => k + "=" + encodeURIComponent(
+        typeof v === "object" ? JSON.stringify(v) : String(v)
+      )).join("&");
+    const url = GATEWAY_URL + "?" + qs;
+
+    dbg("info", "JSONP", `action=${params.action} → ${url.slice(0,80)}…`);
+
+    const timeout = setTimeout(() => {
+      delete window[cbName];
+      if (script.parentNode) script.remove();
+      const msg = "GAS timeout（30秒）— GASが応答しませんでした";
+      dbg("err", "TIMEOUT", msg);
+      reject(new Error(msg));
+    }, 30000);
+
+    window[cbName] = (data) => {
+      clearTimeout(timeout);
+      delete window[cbName];
+      if (script.parentNode) script.remove();
+      if (data.ok === false) {
+        dbg("err", "GAS ERR", JSON.stringify(data.error));
+        reject(new Error(data.error || "GAS error"));
+      } else {
+        const cnt = data.results ? data.results.length : "—";
+        dbg("ok", "JSONP OK", `action=${params.action} count=${cnt}`);
+        resolve(data);
+      }
+    };
+
+    const script = document.createElement("script");
+    script.src = url;
+    script.onerror = (e) => {
+      clearTimeout(timeout);
+      delete window[cbName];
+      const msg = "scriptタグ読み込みエラー — GAS URLが不正 or デプロイ未完了の可能性";
+      dbg("err", "SCRIPT ERR", msg + " | url=" + url.slice(0,100));
+      reject(new Error(msg));
+    };
+    document.head.appendChild(script);
+    dbg("info", "SCRIPT", "scriptタグ挿入: " + url.slice(0,80));
+  });
+}
+
+// 全件クエリ（GASがページネーション吸収）
+async function _gasQueryAll(dbId) {
+  const d = await _jsonp({ action: "queryAll", dbId });
+  return d.results || [];
+}
+
+// 単発リレー（POST/PATCH/GET）
+async function _gasRelay(method, path, body) {
+  const params = { action: "relay", method, path };
+  if (body) params.body = JSON.stringify(body);
+  return _jsonp(params);
+}
+
+// 疎通確認
+async function gasPing() {
+  try {
+    const d = await _jsonp({ action: "ping" });
+    return d.ok === true;
+  } catch { return false; }
+}
+
+// --- 公開API ---
+async function notionPost(path, body) {
+  if (!GATEWAY_URL) return _claudeFallback("POST", path, body);
+  return _gasRelay("POST", path, body);
+}
+
+async function notionPatch(path, body) {
+  if (!GATEWAY_URL) return _claudeFallback("PATCH", path, body);
+  return _gasRelay("PATCH", path, body);
+}
+
+async function notionGet(path) {
+  if (!GATEWAY_URL) return _claudeFallback("GET", path, null);
+  return _gasRelay("GET", path, null);
+}
+
+// 全件取得
+async function notionQueryAll(dbId) {
+  if (GATEWAY_URL) return _gasQueryAll(dbId);
+  return _claudeQueryAll(dbId);
+}
+
+// Notionプロパティ → JS値 抽出
+function nText(prop)    { if (!prop) return ""; return (prop.title||prop.rich_text||[]).map(t=>t.plain_text).join("").trim(); }
+function nSelect(prop)  { return prop?.select?.name || ""; }
+function nCheck(prop)   { return prop?.checkbox ?? false; }
+function nDate(prop)    { return prop?.date?.start || ""; }
+
+// Notionプロパティ組み立て（マスタDB用）
+function buildMasterProps(d, date) {
+  const rt = v => [{ text: { content: String(v||"") } }];
+  return {
+    "検査項目名":        { title:     rt(d.name)    },
+    "工程":              { select:   { name: d.step  }},
+    "分類":              { select:   { name: d.cls   }},
+    "合格基準_テキスト": { rich_text: rt(d.okText)  },
+    "合格基準_下限":     { rich_text: rt(d.okLo)    },
+    "合格基準_上限":     { rich_text: rt(d.okHi)    },
+    "警告値_下限":       { rich_text: rt(d.wLo)     },
+    "警告値_上限":       { rich_text: rt(d.wHi)     },
+    "NGライン_下限":     { rich_text: rt(d.ngLo)    },
+    "NGライン_上限":     { rich_text: rt(d.ngHi)    },
+    "単位":              { select:   { name: d.unit || "なし（定性）" }},
+    "測定頻度":          { rich_text: rt(d.freq)    },
+    "測定方法":          { rich_text: rt(d.method)  },
+    "NG時処置":          { rich_text: rt(d.action)  },
+    "備考":              { rich_text: rt(d.memo||"") },
+    "有効フラグ":        { checkbox:  true           },
+    "改定バージョン":    { rich_text: rt(d.ver)      },
+    "改定日":            { date:     { start: date } },
+    "改定理由":          { rich_text: rt(d.reason)   },
+  };
+}
+
+// 変更履歴DBへの書き込み（アプリが直接呼ぶ）
+async function writeHistory({ name, step, cls, field, before, after, reason, author, ver }) {
+  const rt  = v => [{ text: { content: String(v||"") } }];
+  const now = new Date().toISOString().split("T")[0];
+  const cid = "CHG-" + now.replace(/-/g,"") + "-" + Math.floor(Math.random()*900+100);
+  const props = {
+    "変更ID":        { title:    rt(cid)   },
+    "検査項目名":    { rich_text: rt(name) },
+    "工程":          { select:  { name: step || "仕込み・糖化" }},
+    "変更フィールド":{ rich_text: rt(field || "基準値更新") },
+    "変更前の値":    { rich_text: rt(before||"") },
+    "変更後の値":    { rich_text: rt(after ||"") },
+    "変更理由":      { rich_text: rt(reason||"更新") },
+    "変更者名":      { rich_text: rt(author||"—") },
+    "変更日時":      { date:     { start: now }},
+    "バージョン":    { rich_text: rt(ver||"v1.0") },
+    "承認状態":      { select:  { name: "未承認" }},
+  };
+  return notionPost("/v1/pages", { parent: { database_id: HISTORY_DB_ID }, properties: props });
+}
+
+// 承認ステータスの更新（アプリが直接呼ぶ）
+async function updateApproval(pageId, status, note) {
+  const rt = v => [{ text: { content: String(v||"") } }];
+  const props = {
+    "承認状態": { select: { name: status }},
+    "備考":     { rich_text: rt(note||"") },
+  };
+  return notionPatch(`/v1/pages/${pageId.replace(/-/g,"")}`, props);
+}
+
+// ═══════════════════════════════════════════
+//  フォールバック（GATEWAY_URL 未設定時）
+//  Claude MCP 経由で動作（デモ・開発用）
+// ═══════════════════════════════════════════
+const MODEL = "claude-sonnet-4-20250514";
+
+async function _claudeFallback(method, path, body) {
+  const prompt = `Notion API を呼び出してください。
+method: ${method}
+url: https://api.notion.com${path}
+body: ${body ? JSON.stringify(body) : "なし"}
+結果をJSONのみで返してください。`;
+  const r = await fetch("https://api.anthropic.com/v1/messages", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({
+      model: MODEL, max_tokens: 4000,
+      system: "Notion APIをMCPで呼び出し、結果のJSONのみ返す。",
+      messages: [{ role:"user", content: prompt }],
+      mcp_servers: [{ type:"url", url:"https://mcp.notion.com/mcp", name:"notion" }]
+    })
+  });
+  const d = await r.json();
+  const txt = (d.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("");
+  try { const s=txt.indexOf("{"),e=txt.lastIndexOf("}"); return JSON.parse(txt.slice(s,e+1)); } catch{ return {}; }
+}
+
+async function _claudeQueryAll(dbId) {
+  // MCPは「自然言語でNotionを操作するエージェント」
+  // → Notion APIのraw JSONを返してもらうのではなく
+  //   アプリが必要なフィールドを明示的に指示する
+  const r = await fetch("https://api.anthropic.com/v1/messages", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({
+      model: MODEL, max_tokens: 12000,
+      system: `あなたはNotionデータ取得エージェントです。
+ツールでNotionDBの全ページを取得し、以下のJSON配列のみを返してください。
+前置き・説明・コードブロック記号は一切不要です。純粋なJSON配列だけ出力してください。
+[
+  {
+    "id": "ページID（ハイフンなし32文字）",
+    "properties": {
+      "検査項目名": {"title": [{"plain_text": "値"}]},
+      "工程": {"select": {"name": "値"}},
+      "分類": {"select": {"name": "値"}},
+      "合格基準_テキスト": {"rich_text": [{"plain_text": "値"}]},
+      "合格基準_下限": {"rich_text": [{"plain_text": "値"}]},
+      "合格基準_上限": {"rich_text": [{"plain_text": "値"}]},
+      "警告値_下限": {"rich_text": [{"plain_text": "値"}]},
+      "警告値_上限": {"rich_text": [{"plain_text": "値"}]},
+      "NGライン_下限": {"rich_text": [{"plain_text": "値"}]},
+      "NGライン_上限": {"rich_text": [{"plain_text": "値"}]},
+      "単位": {"select": {"name": "値"}},
+      "測定頻度": {"rich_text": [{"plain_text": "値"}]},
+      "測定方法": {"rich_text": [{"plain_text": "値"}]},
+      "NG時処置": {"rich_text": [{"plain_text": "値"}]},
+      "改定バージョン": {"rich_text": [{"plain_text": "値"}]},
+      "改定理由": {"rich_text": [{"plain_text": "値"}]}
+    }
+  }
+]`,
+      messages: [{ role:"user", content:
+        `データソース collection://${dbId} の全ページを取得し、上記のJSON配列形式で全件返してください。` }],
+      mcp_servers: [{ type:"url", url:"https://mcp.notion.com/mcp", name:"notion" }]
+    })
+  });
+  const d   = await r.json();
+  const txt = (d.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("");
+  try {
+    const s = txt.indexOf("["), e = txt.lastIndexOf("]");
+    if (s < 0 || e < 0) throw new Error("JSON配列が見つかりません");
+    return JSON.parse(txt.slice(s, e+1));
+  } catch(err) {
+    console.error("_claudeQueryAll parse error:", err, txt.slice(0,300));
+    return [];
+  }
+}
+
+// 後方互換（旧 callClaude / callClaudeObj を使っている箇所向け）
+async function callClaude(prompt, max=5000) {
+  const r = await fetch("https://api.anthropic.com/v1/messages", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({
+      model: MODEL, max_tokens: max,
+      system: "Notionのデータ操作エージェント。必ずJSON配列のみ返す。前置き・コード囲み不要。",
+      messages: [{ role:"user", content: prompt }],
+      mcp_servers: [{ type:"url", url:"https://mcp.notion.com/mcp", name:"notion" }]
+    })
+  });
+  const d = await r.json();
+  return (d.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("");
+}
+
+async function callClaudeObj(prompt, max=2000) {
+  const r = await fetch("https://api.anthropic.com/v1/messages", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({
+      model: MODEL, max_tokens: max,
+      system: "NotionのMCPツールを使って操作する。成功したら {\"ok\":true} のみ返す。",
+      messages: [{ role:"user", content: prompt }],
+      mcp_servers: [{ type:"url", url:"https://mcp.notion.com/mcp", name:"notion" }]
+    })
+  });
+  const d = await r.json();
+  return (d.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("");
+}
+
+// ═══════ LOAD ═══════
+async function loadItems() {
+  document.getElementById("listBody").innerHTML =
+    `<div class="list-loading"><span class="spin"></span>Notionから読み込み中…</div>`;
+
+  dbg("info", "LOAD", `開始 GATEWAY_URL=${GATEWAY_URL ? GATEWAY_URL.slice(0,60)+"…" : "（未設定・MCP fallback）"}`);
+  dbg("info", "LOAD", `MASTER_DB_ID=${MASTER_DB_ID}`);
+
+  if (GATEWAY_URL) {
+    dbg("info", "PING", "GAS疎通確認中…");
+    const alive = await gasPing();
+    if (!alive) {
+      const msg = "GAS Gatewayに接続できません";
+      dbg("err", "PING", msg + " — GASが「全員にアクセス可」でデプロイされているか確認してください");
+      document.getElementById("listBody").innerHTML =
+        `<div class="empty-state">⚠️ ${msg}<br>
+         <small style="color:var(--tx3)">GASが「全員にアクセス可」でデプロイされているか確認してください。<br>
+         デバッグパネルで「Ping」ボタンを押して詳細を確認してください。</small></div>`;
+      setLed(false);
+      return;
+    }
+    dbg("ok", "PING", "GAS接続OK");
+  }
+
+  try {
+    dbg("info", "QUERY", "全件取得開始…");
+    const pages = await notionQueryAll(MASTER_DB_ID);
+    dbg("ok", "QUERY", `取得完了: ${pages.length}件`);
+
+    if (pages.length === 0) {
+      dbg("warn", "QUERY", "0件取得 — DBにデータがないか、DB IDが間違っている可能性があります");
+    } else {
+      const sample = pages[0];
+      dbg("info", "PARSE", `先頭ページid=${sample.id} propertiesキー=${Object.keys(sample.properties||{}).join(", ")}`);
+    }
+
+    items = pages.map(p => {
+      const pr = p.properties || {};
+      return {
+        pageUrl: p.id,
+        name:    nText(pr["検査項目名"]),
+        step:    nSelect(pr["工程"]),
+        cls:     nSelect(pr["分類"]),
+        okText:  nText(pr["合格基準_テキスト"]),
+        okLo:    nText(pr["合格基準_下限"]),
+        okHi:    nText(pr["合格基準_上限"]),
+        wLo:     nText(pr["警告値_下限"]),
+        wHi:     nText(pr["警告値_上限"]),
+        ngLo:    nText(pr["NGライン_下限"]),
+        ngHi:    nText(pr["NGライン_上限"]),
+        unit:    nSelect(pr["単位"]),
+        freq:    nText(pr["測定頻度"]),
+        method:  nText(pr["測定方法"]),
+        action:  nText(pr["NG時処置"]),
+        ver:     nText(pr["改定バージョン"]),
+        reason:  nText(pr["改定理由"]),
+      };
+    }).filter(i => i.name);
+
+    dbg("ok", "PARSE", `有効件数: ${items.length}件（nameあり） / CCP:${items.filter(i=>i.cls==="CCP").length} OP:${items.filter(i=>i.cls==="OP").length} Q:${items.filter(i=>i.cls==="Q").length}`);
+
+    setLed(true);
+    updateSidebarCounts();
+    renderList();
+  } catch(e) {
+    dbg("err", "ERROR", e.message);
+    toast("読み込みエラー: " + e.message, "er");
+    document.getElementById("listBody").innerHTML =
+      `<div class="empty-state">⚠️ ${esc(e.message)}<br>
+       <small style="color:var(--tx3)">右下の「🔧 DEBUG」パネルで詳細を確認してください。</small></div>`;
+    setLed(false);
+  }
+}
+
+// ═══════ RENDER LIST ═══════
+function renderList() {
+  const q = (document.getElementById("searchInput")?.value||"").toLowerCase();
+  const filtered = items.filter(i => {
+    const mc = currentFilter==="all" || i.cls===currentFilter;
+    const ms = currentStepFilter==="all" || i.step===currentStepFilter;
+    const mq = !q || (i.name||"").toLowerCase().includes(q) || (i.step||"").toLowerCase().includes(q);
+    return mc && ms && mq;
+  });
+
+  if (!filtered.length) {
+    document.getElementById("listBody").innerHTML = `<div class="empty-state">該当する項目がありません</div>`;
+    return;
+  }
+
+  const groups = {};
+  filtered.forEach(i => { if(!groups[i.step]) groups[i.step]=[]; groups[i.step].push(i); });
+
+  let html = "";
+  STEPS.forEach(s => {
+    if (!groups[s]) return;
+    const c = STEP_COLOR[s]||"#535d7f";
+    html += `<div style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+        <div style="width:3px;height:14px;background:${c};border-radius:2px;flex-shrink:0"></div>
+        <span style="font-size:11px;font-weight:600;color:${c};font-family:var(--fm);letter-spacing:.04em;text-transform:uppercase">${s}</span>
+        <span style="font-size:10px;color:var(--tx4);font-family:var(--fm)">${groups[s].length}件</span>
+      </div>`;
+    groups[s].forEach(i => {
+      const cls = i.cls||"?";
+      const clsStyle = cls==="CCP"?"color:var(--red);border-color:var(--red-b);background:var(--red-l)":
+                       cls==="OP"?"color:var(--blue);border-color:var(--blue-b);background:var(--blue-l)":
+                       "color:var(--pur);border-color:var(--pur-b);background:var(--pur-l)";
+      const rowCls = cls==="CCP"?"ccp-row":cls==="OP"?"op-row":"q-row";
+      const okDisp = i.okText||([i.okLo,i.okHi].filter(Boolean).join("–"))||"—";
+      const ngDisp = [i.ngLo&&"下:"+i.ngLo, i.ngHi&&"上:"+i.ngHi].filter(Boolean).join("/") || "—";
+      html += `<div class="item-row ${rowCls}" onclick='openDetail(${JSON.stringify(i)})'>
+        <div class="item-cls" style="${clsStyle}">${cls}</div>
+        <div class="item-name">${esc(i.name||"")}</div>
+        <div class="item-step">${esc(i.freq||"—")}</div>
+        <div class="item-ok">${esc(okDisp)}</div>
+        <div class="item-ng">NG: ${esc(ngDisp)}</div>
+        <div class="item-unit">${esc(i.unit||"—")}</div>
+        <div class="item-arrow">›</div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+  document.getElementById("listBody").innerHTML = html;
+}
+
+// ═══════ DETAIL PAGE ═══════
+function openDetail(item) {
+  editingItem = item;
+  document.getElementById("tab-detail").style.display = "block";
+  switchTab("detail");
+  renderDetail(item);
+}
+
+function renderDetail(item) {
+  // HEADER
+  document.getElementById("d-title").textContent = item.name||"—";
+  const cls = item.cls||"?";
+  const clsBadge = cls==="CCP"?`<span class="dh-badge b-ccp">CCP</span>`:
+                   cls==="OP"?`<span class="dh-badge b-op">OP</span>`:
+                   `<span class="dh-badge b-q">Q</span>`;
+  const stepColor = STEP_COLOR[item.step]||"#535d7f";
+  document.getElementById("d-meta").innerHTML =
+    clsBadge +
+    `<span class="dh-badge" style="background:rgba(0,0,0,.3);border:1px solid ${stepColor}44;color:${stepColor}">${esc(item.step||"")}</span>` +
+    (item.unit ? `<span class="dh-badge" style="background:var(--s3);border:1px solid var(--rim);color:var(--tx3);font-family:var(--fm);font-size:9px">${esc(item.unit)}</span>` : "") +
+    (item.ver ? `<span class="dh-badge" style="background:var(--s3);border:1px solid var(--rim);color:var(--tx4);font-family:var(--fm);font-size:9px">${esc(item.ver)}</span>` : "");
+
+  const pageId = (item.pageUrl||"").replace(/-/g,"");
+  document.getElementById("d-notion-link").href = NOTION_BASE + pageId;
+
+  // 保存済みメモ取得
+  const saved = localNotes[item.pageUrl]||{};
+
+  // 合格基準カード
+  const okDisp = item.okText||([item.okLo,item.okHi].filter(Boolean).join("–"))||"—";
+  const warnDisp = [item.wLo&&"下限:"+item.wLo, item.wHi&&"上限:"+item.wHi].filter(Boolean).join(" / ")||"—";
+  const ngDisp = [item.ngLo&&"下限:"+item.ngLo, item.ngHi&&"上限:"+item.ngHi].filter(Boolean).join(" / ")||"—";
+
+  // 相互参照: 同工程の他項目
+  const sameStep = items.filter(x => x.step===item.step && x.name!==item.name);
+  const sameCls  = items.filter(x => x.cls===item.cls && x.step!==item.step && x.name!==item.name).slice(0,6);
+
+  // CCP意思決定ロジック説明
+  const ccpLogic = {
+    "CCP":`<div style="background:var(--red-l);border:1px solid var(--red-b);border-radius:var(--r3);padding:10px 13px;font-size:12px;color:var(--tx2);line-height:1.8">
+      <strong style="color:var(--red);display:block;margin-bottom:5px">⚠️ CCP として指定されている理由</strong>
+      この工程での危害発生は後工程で回収・修正することが不可能、または著しく困難です。
+      CLを逸脱した場合は<strong style="color:var(--red)">即座に是正措置を発動</strong>し、該当ロットを保留・調査する必要があります。
+    </div>`,
+    "OP":`<div style="background:var(--blue-l);border:1px solid var(--blue-b);border-radius:var(--r3);padding:10px 13px;font-size:12px;color:var(--tx2);line-height:1.8">
+      <strong style="color:var(--blue);display:block;margin-bottom:5px">ℹ️ OP（一般管理点）として指定されている理由</strong>
+      食品安全に関連しますが、CCPほど絶対的ではありません。逸脱時は上長報告・記録を行い、後工程での確認後に最終判断します。
+    </div>`,
+    "Q":`<div style="background:var(--pur-l);border:1px solid var(--pur-b);border-radius:var(--r3);padding:10px 13px;font-size:12px;color:var(--tx2);line-height:1.8">
+      <strong style="color:var(--pur);display:block;margin-bottom:5px">✦ Q（品質管理点）として指定されている理由</strong>
+      食品安全への直接的危害はありませんが、製品の品質・風味・外観に影響します。逸脱時は品質低下として記録し、官能評価を強化します。
+    </div>`
+  };
+
+  // デフォルトNG処置チェックリスト
+  const defaultChecklist = {
+    "CCP":["① CLの逸脱を確認し記録する（数値・時刻・担当者）","② 製造ラインを一時停止する","③ 上長・品質管理責任者に速報","④ 当該Lotを隔離・保留タグを付ける","⑤ 原因を特定する（設備・材料・手順）","⑥ 是正措置を実施し記録する","⑦ 修正後に再測定しCL内を確認","⑧ インシデントDBへ起票し有効性確認日を設定"],
+    "OP":["① 逸脱を記録する（数値・時刻・担当者）","② 上長に報告する","③ 操作パラメータを調整する","④ 次の測定でCL内に戻ったことを確認","⑤ 必要であればインシデントDB記録"],
+    "Q":["① 逸脱を記録する","② 品質担当者に報告","③ 官能評価を実施する","④ 調整可能であれば補正する","⑤ 補正不可の場合は保留・専門家評価"]
+  };
+
+  const chkList = (saved.checklist||defaultChecklist[cls]||[]);
+
+  document.getElementById("detailBody").innerHTML = `
+<!-- 分類の意味 -->
+<div style="margin-bottom:16px">${ccpLogic[cls]||""}</div>
+
+<!-- 基準値 -->
+<div class="flow-sec-title">判定基準値</div>
+<div class="d-grid">
+  <div class="d-card">
+    <div class="d-card-head">🟢 合格基準（Critical Limit）</div>
+    <div class="d-card-body">
+      <div class="d-val-row"><div class="d-label">範囲</div><div class="d-val ok">${esc(okDisp)} ${esc(item.unit||"")}</div></div>
+      ${item.okLo?`<div class="d-val-row"><div class="d-label">下限</div><div class="d-val ok">${esc(item.okLo)}</div></div>`:""}
+      ${item.okHi?`<div class="d-val-row"><div class="d-label">上限</div><div class="d-val ok">${esc(item.okHi)}</div></div>`:""}
+    </div>
+  </div>
+  <div class="d-card">
+    <div class="d-card-head">🟡 警告値 / 🔴 NGライン</div>
+    <div class="d-card-body">
+      <div class="d-val-row"><div class="d-label">警告値</div><div class="d-val warn">${esc(warnDisp)}</div></div>
+      <div class="d-val-row"><div class="d-label">NGライン</div><div class="d-val ng">${esc(ngDisp)}</div></div>
+    </div>
+  </div>
+  <div class="d-card">
+    <div class="d-card-head">⏱ 測定方法・頻度</div>
+    <div class="d-card-body">
+      <div class="d-val-row"><div class="d-label">頻度</div><div class="d-val plain">${esc(item.freq||"—")}</div></div>
+      <div class="d-val-row"><div class="d-label">方法</div><div class="d-val plain">${esc(item.method||"—")}</div></div>
+    </div>
+  </div>
+  <div class="d-card">
+    <div class="d-card-head">📋 改定情報</div>
+    <div class="d-card-body">
+      <div class="d-val-row"><div class="d-label">バージョン</div><div class="d-val plain">${esc(item.ver||"—")}</div></div>
+      <div class="d-val-row"><div class="d-label">理由</div><div class="d-val plain">${esc(item.reason||"—")}</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 工程フロー図 -->
+<div class="flow-section">
+  <div class="flow-sec-title">工程フロー（この項目の位置）</div>
+  <div class="flow-diagram">
+    ${STEPS.map((s,i) => {
+      const active = s===item.step;
+      const items_here = items.filter(x=>x.step===s&&x.cls===cls);
+      const c = STEP_COLOR[s]||"#535d7f";
+      return `${i>0?'<div class="flow-arr">›</div>':''}<div class="flow-step${active?" active":""}">
+        <div class="flow-step-num">STEP ${String(i+1).padStart(2,"0")}</div>
+        <div class="flow-step-name" style="color:${active?"#fff":c}">${s}</div>
+        <div class="flow-step-items">
+          ${items_here.slice(0,3).map(x=>`<div class="flow-step-item${x.name===item.name?" highlight":""}">• ${esc(x.name||"")}</div>`).join("")}
+          ${items_here.length>3?`<div class="flow-step-item" style="color:var(--tx4)">+${items_here.length-3}件</div>`:""}
+        </div>
+      </div>`;
+    }).join("")}
+  </div>
+</div>
+
+<!-- NG時処置チェックリスト -->
+<div class="flow-section">
+  <div class="flow-sec-title">NG時処置手順</div>
+  <div style="margin-bottom:10px;font-size:12.5px;color:var(--tx2);background:var(--s1);border:1px solid var(--rim);border-radius:var(--r2);padding:10px 13px;line-height:1.8">
+    ${esc(item.action||"処置方法が未入力です。編集ボタンから追加してください。")}
+  </div>
+  <div class="checklist" id="chklist">
+    ${chkList.map((t,i)=>`<div class="ck-item" id="ck-${i}">
+      <input type="checkbox" onchange="toggleCk(${i},'${esc(item.pageUrl||"")}')">
+      <div class="ck-text">${esc(t)}</div>
+    </div>`).join("")}
+  </div>
+</div>
+
+<!-- メモ・手順書エディタ -->
+<div class="notes-section">
+  <div class="flow-sec-title">作業メモ・手順詳細</div>
+  <div class="notes-tabs">
+    <div class="notes-tab on" onclick="switchNote('proc','${esc(item.pageUrl||"")}')">詳細手順</div>
+    <div class="notes-tab" onclick="switchNote('memo','${esc(item.pageUrl||"")}')">備考・コメント</div>
+  </div>
+  <div class="notes-content on" id="note-proc">
+    <textarea class="notes-editor" id="ed-proc" placeholder="詳細な作業手順を記入してください…\n例:\n① 測定器の電源を入れ校正を確認\n② サンプルを採取（100mL）\n③ 測定ボタンを押し数値を読み取る\n④ 記録シートに転記する">${saved.proc||""}</textarea>
+    <div class="notes-save">
+      <button class="btn btn-g" onclick="saveNote('proc','${esc(item.pageUrl||"")}')">💾 Notionに保存</button>
+      <span class="save-ts" id="ts-proc">${saved.procTs||""}</span>
+    </div>
+  </div>
+  <div class="notes-content" id="note-memo">
+    <textarea class="notes-editor" id="ed-memo" placeholder="備考・注意事項・過去の逸脱事例など…">${saved.memo||""}</textarea>
+    <div class="notes-save">
+      <button class="btn btn-g" onclick="saveNote('memo','${esc(item.pageUrl||"")}')">💾 Notionに保存</button>
+      <span class="save-ts" id="ts-memo">${saved.memoTs||""}</span>
+    </div>
+  </div>
+</div>
+
+<!-- 相互参照 -->
+${sameStep.length?`
+<div class="flow-section">
+  <div class="flow-sec-title">同工程の他の検査項目 (${esc(item.step)})</div>
+  <div class="related-grid">
+    ${sameStep.map(x=>{
+      const c=x.cls==="CCP"?"b-ccp":x.cls==="OP"?"b-op":"b-q";
+      const ok=x.okText||([x.okLo,x.okHi].filter(Boolean).join("–"))||"—";
+      return `<div class="rel-card" onclick='openDetail(${JSON.stringify(x)})'>
+        <div class="rel-card-top"><span class="item-cls ${c}" style="font-size:9px">${esc(x.cls)}</span><div class="rel-name">${esc(x.name||"")}</div></div>
+        <div class="rel-step">${esc(x.unit||"—")} ／ ${esc(x.freq||"—")}</div>
+        <div class="rel-ok">CL: ${esc(ok)}</div>
+      </div>`;
+    }).join("")}
+  </div>
+</div>`:""}
+
+${sameCls.length?`
+<div class="flow-section">
+  <div class="flow-sec-title">他工程の ${item.cls} 項目（相互参照）</div>
+  <div class="related-grid">
+    ${sameCls.map(x=>{
+      const ok=x.okText||([x.okLo,x.okHi].filter(Boolean).join("–"))||"—";
+      const sc=STEP_COLOR[x.step]||"#535d7f";
+      return `<div class="rel-card" onclick='openDetail(${JSON.stringify(x)})'>
+        <div class="rel-card-top"><span class="rel-step" style="color:${sc}">${esc(x.step||"")}</span></div>
+        <div class="rel-name">${esc(x.name||"")}</div>
+        <div class="rel-ok">CL: ${esc(ok)} ${esc(x.unit||"")}</div>
+      </div>`;
+    }).join("")}
+  </div>
+</div>`:""}
+`;
+}
+
+// ═══════ NOTE HELPERS ═══════
+function switchNote(tab, url) {
+  document.querySelectorAll(".notes-tab").forEach((el,i)=>el.classList.toggle("on", (tab==="proc"&&i===0)||(tab==="memo"&&i===1)));
+  document.getElementById("note-proc").classList.toggle("on",tab==="proc");
+  document.getElementById("note-memo").classList.toggle("on",tab==="memo");
+}
+
+function toggleCk(idx, url) {
+  const el = document.getElementById("ck-"+idx);
+  if(el) el.classList.toggle("done", el.querySelector("input").checked);
+}
+
+async function saveNote(type, url) {
+  if(!url) return;
+  const val = document.getElementById("ed-"+type).value;
+  const ts  = new Date().toLocaleString("ja-JP");
+  if(!localNotes[url]) localNotes[url]={};
+  localNotes[url][type]    = val;
+  localNotes[url][type+"Ts"] = "保存: "+ts;
+  document.getElementById("ts-"+type).textContent = "保存: "+ts;
+
+  try {
+    // フィールドマッピング: 詳細手順→測定方法、備考→備考
+    const fieldKey = type === "proc" ? "測定方法" : "備考";
+    const rt = v => [{ text: { content: String(v||"") } }];
+    const pageId = url.replace(/-/g,"");
+
+    // アプリが直接Notionに書く（GASは透過するだけ）
+    await notionPatch(`/v1/pages/${pageId}`, {
+      [fieldKey]: { rich_text: rt(val) }
+    });
+
+    // 変更履歴もアプリが直接書く
+    if(editingItem) {
+      await writeHistory({
+        name:   editingItem.name,
+        step:   editingItem.step,
+        cls:    editingItem.cls,
+        field:  fieldKey,
+        before: "",
+        after:  val.slice(0,80) + (val.length>80?"…":""),
+        reason: "メモ更新",
+        author: "—",
+        ver:    editingItem.ver || "v1.0",
+      });
+    }
+    toast("Notionに保存しました","ok");
+  } catch(e) {
+    toast("保存失敗: "+e.message,"er");
+  }
+}
+
+// ═══════ MODAL ═══════
+function openAddModal() {
+  editingItem = null;
+  document.getElementById("modalTitle").textContent = "検査項目を追加";
+  ["m-name","m-step","m-cls","m-ok","m-ok-lo","m-ok-hi","m-w-lo","m-w-hi","m-ng-lo","m-ng-hi","m-freq","m-method","m-action","m-reason","m-author"]
+    .forEach(id => { const e=document.getElementById(id); if(e) e.value=""; });
+  document.getElementById("m-unit").value="なし（定性）";
+  document.getElementById("m-ver").value="v1.0";
+  document.getElementById("modal").classList.add("on");
+}
+
+function openEditModal() {
+  if(!editingItem) return;
+  document.getElementById("modalTitle").textContent = "基準値を編集";
+  const i=editingItem;
+  document.getElementById("m-name").value=i.name||"";
+  document.getElementById("m-step").value=i.step||"";
+  document.getElementById("m-cls").value=i.cls||"";
+  document.getElementById("m-ok").value=i.okText||"";
+  document.getElementById("m-ok-lo").value=i.okLo||"";
+  document.getElementById("m-ok-hi").value=i.okHi||"";
+  document.getElementById("m-w-lo").value=i.wLo||"";
+  document.getElementById("m-w-hi").value=i.wHi||"";
+  document.getElementById("m-ng-lo").value=i.ngLo||"";
+  document.getElementById("m-ng-hi").value=i.ngHi||"";
+  document.getElementById("m-unit").value=i.unit||"なし（定性）";
+  document.getElementById("m-freq").value=i.freq||"";
+  document.getElementById("m-method").value=i.method||"";
+  document.getElementById("m-action").value=i.action||"";
+  document.getElementById("m-ver").value=bumpVer(i.ver||"v1.0");
+  document.getElementById("m-reason").value="";
+  document.getElementById("m-author").value="";
+  document.getElementById("modal").classList.add("on");
+}
+
+function closeModal() { document.getElementById("modal").classList.remove("on"); }
+
+async function saveItem() {
+  const btn    = document.getElementById("modal-save-btn");
+  const name   = document.getElementById("m-name").value.trim();
+  const step   = document.getElementById("m-step").value;
+  const cls    = document.getElementById("m-cls").value;
+  if (!name||!step||!cls){ toast("名前・工程・分類は必須です","er"); return; }
+
+  btn.disabled=true; btn.textContent="保存中…";
+  document.getElementById("savingOver").classList.add("on");
+
+  const now    = new Date().toISOString().split("T")[0];
+  const isEdit = !!editingItem;
+  const ver    = document.getElementById("m-ver").value||"v1.0";
+  const reason = document.getElementById("m-reason").value||"更新";
+  const author = document.getElementById("m-author").value||"—";
+
+  const data = {
+    name,   step,   cls,
+    okText: document.getElementById("m-ok").value,
+    okLo:   document.getElementById("m-ok-lo").value,
+    okHi:   document.getElementById("m-ok-hi").value,
+    wLo:    document.getElementById("m-w-lo").value,
+    wHi:    document.getElementById("m-w-hi").value,
+    ngLo:   document.getElementById("m-ng-lo").value,
+    ngHi:   document.getElementById("m-ng-hi").value,
+    unit:   document.getElementById("m-unit").value,
+    freq:   document.getElementById("m-freq").value,
+    method: document.getElementById("m-method").value,
+    action: document.getElementById("m-action").value,
+    memo:   "",
+    ver, reason,
+  };
+
+  try {
+    const props = buildMasterProps(data, now);
+    let pageId;
+
+    if (isEdit && editingItem.pageUrl) {
+      // ── 既存ページを更新（アプリ → GAS → Notion）
+      const id = editingItem.pageUrl.replace(/-/g,"");
+      await notionPatch(`/v1/pages/${id}`, props);
+      pageId = editingItem.pageUrl;
+    } else {
+      // ── 新規ページを作成（アプリ → GAS → Notion）
+      const res = await notionPost("/v1/pages", {
+        parent: { database_id: MASTER_DB_ID },
+        properties: props
+      });
+      pageId = res.id;
+    }
+
+    // ── 変更履歴をアプリが直接Notionに書く（GAS経由）
+    //    GASは透過するだけ。判断・加工は一切しない。
+    await writeHistory({
+      name, step, cls,
+      field:  isEdit ? "基準値更新" : "新規作成",
+      before: isEdit ? (editingItem.okText||editingItem.okLo||"—") : "",
+      after:  data.okText || data.okLo || "—",
+      reason, author, ver,
+    });
+
+    toast(isEdit ? "✓ 更新しました" : "✓ 追加しました", "ok");
+    closeModal();
+    await loadItems();
+
+  } catch(e) {
+    toast("保存エラー: "+e.message,"er");
+  } finally {
+    btn.disabled=false; btn.textContent="💾 Notionに保存";
+    document.getElementById("savingOver").classList.remove("on");
+  }
+}
+
+// ═══════ TAB / FILTER ═══════
+function switchTab(t) {
+  ["howto","glossary","list","detail"].forEach(n => {
+    const p=document.getElementById("panel-"+n);
+    if(p) p.classList.toggle("on",n===t);
+    const tb=document.querySelector(`.tb-tab[onclick*="'${n}'"]`);
+    if(tb) tb.classList.toggle("on",n===t);
+    const sb=document.getElementById("sbn-"+n);
+    if(sb) sb.classList.toggle("on",n===t);
+  });
+  if(t==="list" && !items.length) loadItems();
+}
+
+function toggleFaq(el) {
+  const ans = el.nextElementSibling;
+  const arr = el.querySelector("span:last-child");
+  const open = ans.style.display === "block";
+  ans.style.display = open ? "none" : "block";
+  if(arr) arr.textContent = open ? "▾" : "▴";
+}
+
+function applyFilter(f) {
+  currentFilter=f;
+  ["all","CCP","OP","Q"].forEach(v => {
+    const fb=document.getElementById("fb-"+v.toLowerCase().replace("ccp","ccp").replace("op","op").replace("q","q"));
+    if(fb) fb.classList.toggle("on",v===f);
+    const sf=document.getElementById("sf-"+v.toLowerCase());
+    if(sf) sf.classList.toggle("on",v===f);
+  });
+  renderList();
+}
+
+function applyStepFilter(s) {
+  currentStepFilter=s;
+  renderList();
+  switchTab("list");
+}
+
+function updateSidebarCounts() {
+  document.getElementById("sb-total").textContent=items.length;
+  document.getElementById("sf-all-cnt").textContent=items.length;
+  document.getElementById("sf-ccp-cnt").textContent=items.filter(i=>i.cls==="CCP").length;
+  document.getElementById("sf-op-cnt").textContent=items.filter(i=>i.cls==="OP").length;
+  document.getElementById("sf-q-cnt").textContent=items.filter(i=>i.cls==="Q").length;
+}
+
+// ═══════ UTILS ═══════
+function setLed(on) {
+  document.getElementById("led").classList.toggle("on",on);
+  document.getElementById("ledTx").textContent=on?"Notion 接続済":"接続エラー";
+}
+function toast(msg,type="ok") {
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.className="toast on "+type;
+  setTimeout(()=>t.classList.remove("on"),3500);
+}
+function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;")}
+function bumpVer(v){const m=v.match(/v(\d+)\.(\d+)/);return m?`v${m[1]}.${parseInt(m[2])+1}`:"v1.1"}
+
+// ═══════════════════════════════════════════
+//  DEBUG ユーティリティ
+// ═══════════════════════════════════════════
+let _dbgOpen = false;
+
+function dbg(level, tag, msg) {
+  // コンソールにも出力
+  const fn = level==="err" ? console.error : level==="warn" ? console.warn : console.log;
+  fn(`[${tag}] ${msg}`);
+
+  // パネルに追記
+  const log = document.getElementById("dbg-log");
+  if (!log) return;
+  const ts  = new Date().toLocaleTimeString("ja-JP");
+  const line = document.createElement("div");
+  line.className = "dbg-line";
+  line.innerHTML = `<span class="dbg-ts">${ts}</span><span class="dbg-tag ${level}">${tag}</span><span class="dbg-msg">${esc(String(msg))}</span>`;
+  log.appendChild(line);
+  log.scrollTop = log.scrollHeight;
+
+  // エラーのときはパネルを自動で開く
+  if (level === "err" && !_dbgOpen) toggleDebug();
+}
+
+function toggleDebug() {
+  _dbgOpen = !_dbgOpen;
+  document.getElementById("dbg-panel").classList.toggle("show", _dbgOpen);
+  document.getElementById("dbgToggle").textContent = _dbgOpen ? "✕ DEBUG" : "🔧 DEBUG";
+}
+
+function dbgClear() {
+  const log = document.getElementById("dbg-log");
+  if (log) log.innerHTML = "";
+}
+
+// ─── 個別テスト ───
+async function runPingTest() {
+  dbg("info", "TEST", "─── Ping テスト開始 ───");
+  dbg("info", "TEST", `GATEWAY_URL = ${GATEWAY_URL || "（未設定）"}`);
+  try {
+    const d = await _jsonp({ action: "ping" });
+    dbg("ok", "PING", `成功: ${JSON.stringify(d)}`);
+  } catch(e) {
+    dbg("err", "PING", `失敗: ${e.message}`);
+  }
+}
+
+async function runQueryTest() {
+  dbg("info", "TEST", "─── QueryAll テスト開始 ───");
+  dbg("info", "TEST", `DB ID = ${MASTER_DB_ID}`);
+  try {
+    const pages = await _gasQueryAll(MASTER_DB_ID);
+    dbg("ok", "QUERY", `取得: ${pages.length}件`);
+    if (pages[0]) {
+      dbg("info", "QUERY", `先頭ページID: ${pages[0].id}`);
+      dbg("info", "QUERY", `プロパティキー: ${Object.keys(pages[0].properties||{}).slice(0,8).join(", ")}`);
+    }
+  } catch(e) {
+    dbg("err", "QUERY", `失敗: ${e.message}`);
+  }
+}
+
+async function runRelayTest() {
+  dbg("info", "TEST", "─── Relay テスト開始（DB メタデータ取得）───");
+  try {
+    const d = await _gasRelay("GET", `/v1/databases/${MASTER_DB_ID}`, null);
+    if (d.id) {
+      dbg("ok", "RELAY", `DB名: ${(d.title||[{}])[0]?.plain_text || "（取得失敗）"}`);
+    } else {
+      dbg("warn", "RELAY", `異常レスポンス: ${JSON.stringify(d).slice(0,150)}`);
+    }
+  } catch(e) {
+    dbg("err", "RELAY", `失敗: ${e.message}`);
+  }
+}
+
+async function runDebugAll() {
+  dbgClear();
+  dbg("info", "ALL", "════ 全テスト開始 ════");
+  await runPingTest();
+  await runRelayTest();
+  await runQueryTest();
+  dbg("info", "ALL", "════ 全テスト完了 ════");
+}
+
+window.addEventListener("DOMContentLoaded",()=>{
+  setLed(false);
+  document.getElementById("ledTx").textContent="接続待機中";
+  switchTab("howto");
+  dbg("info", "INIT", `アプリ起動 GATEWAY=${GATEWAY_URL ? GATEWAY_URL.slice(0,60)+"…" : "未設定（MCP fallback）"}`);
+  dbg("info", "INIT", `MASTER_DB_ID=${MASTER_DB_ID} / HISTORY_DB_ID=${HISTORY_DB_ID}`);
+});
+</script>
+<script>
+/* =========================================================
+   APPEND-ONLY PATCH : GASデプロイURL設定機能
+   既存コードは変更せず、この<script>を末尾に追記するだけで動作
+   ========================================================= */
+(function () {
+  const GATEWAY_STORAGE_KEY = "haccp_gas_gateway_url";
+  const EMBEDDED_GATEWAY_URL = (typeof GATEWAY_URL === "string" ? GATEWAY_URL : "") || "";
+
+  function normalizeGatewayUrl(url) {
+    return String(url || "").trim().replace(/[?&]+$/, "");
+  }
+
+  function getSavedGatewayUrl() {
+    try {
+      return normalizeGatewayUrl(localStorage.getItem(GATEWAY_STORAGE_KEY) || "");
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function getEffectiveGatewayUrl() {
+    return normalizeGatewayUrl(getSavedGatewayUrl() || EMBEDDED_GATEWAY_URL || "");
+  }
+
+  function setSavedGatewayUrl(url) {
+    const v = normalizeGatewayUrl(url);
+    try {
+      localStorage.setItem(GATEWAY_STORAGE_KEY, v);
+    } catch (e) {}
+    return v;
+  }
+
+  function clearSavedGatewayUrl() {
+    try {
+      localStorage.removeItem(GATEWAY_STORAGE_KEY);
+    } catch (e) {}
+  }
+
+  function gatewayShortLabel(url) {
+    const v = normalizeGatewayUrl(url);
+    if (!v) return "未設定";
+    return v.length > 46 ? v.slice(0, 46) + "…" : v;
+  }
+
+  function dbgSafe(level, tag, msg) {
+    if (typeof dbg === "function") dbg(level, tag, msg);
+    else console.log("[" + tag + "] " + msg);
+  }
+
+  function ensureGatewayStyles() {
+    if (document.getElementById("gateway-settings-style")) return;
+
+    const style = document.createElement("style");
+    style.id = "gateway-settings-style";
+    style.textContent = `
+      .tb-mini-gateway{
+        display:flex;align-items:center;
+        max-width:260px;
+        padding:5px 10px;
+        border-radius:var(--r2);
+        border:1px solid var(--rim);
+        background:var(--s2);
+        color:var(--tx3);
+        font-family:var(--fm);
+        font-size:10px;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+      }
+      .tb-mini-gateway.ok{
+        color:var(--gr);
+        border-color:var(--gr-b);
+        background:var(--gr-l);
+      }
+      .tb-mini-gateway.warn{
+        color:var(--amber);
+        border-color:var(--amber-b);
+        background:var(--amber-l);
+      }
+      .gateway-help-box{
+        padding:10px 12px;
+        background:var(--s2);
+        border:1px solid var(--rim);
+        border-radius:var(--r2);
+        font-size:11px;
+        color:var(--tx2);
+        line-height:1.8;
+        word-break:break-all;
+      }
+      .gateway-help-box code{
+        font-family:var(--fm);
+        color:var(--tx);
+        background:var(--s1);
+        border:1px solid var(--rim);
+        border-radius:4px;
+        padding:1px 4px;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function ensureGatewayTopbarUi() {
+    if (document.getElementById("gateway-settings-btn")) return;
+
+    const topbar = document.querySelector(".topbar");
+    const ledBox = document.querySelector(".topbar .tb-led");
+    if (!topbar || !ledBox) return;
+
+    const btn = document.createElement("button");
+    btn.id = "gateway-settings-btn";
+    btn.className = "btn";
+    btn.textContent = "⚙️ 接続設定";
+    btn.onclick = openGatewaySettingsModal;
+
+    const chip = document.createElement("div");
+    chip.id = "gateway-current-chip";
+    chip.className = "tb-mini-gateway warn";
+    chip.textContent = "GAS: 未設定";
+
+    topbar.insertBefore(chip, ledBox);
+    topbar.insertBefore(btn, chip);
+  }
+
+  function ensureGatewayModal() {
+    if (document.getElementById("gatewayModal")) return;
+
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = `
+      <div class="overlay" id="gatewayModal">
+        <div class="modal">
+          <div class="modal-head">
+            <div class="modal-title">GAS 接続設定</div>
+            <button class="modal-close" onclick="closeGatewaySettingsModal()">✕</button>
+          </div>
+          <div class="modal-body">
+            <div class="field-g">
+              <div class="field-label">GASデプロイURL <span class="field-req">*</span></div>
+              <input type="text" id="gateway-url-input" placeholder="https://script.google.com/macros/s/.../exec">
+            </div>
+
+            <div class="gateway-help-box">
+              <div><span style="color:var(--tx3)">現在有効なURL:</span> <span id="gateway-effective-url-view">—</span></div>
+              <div><span style="color:var(--tx3)">埋め込み初期値:</span> <span id="gateway-default-url-view">—</span></div>
+              <div><span style="color:var(--tx3)">保存先:</span> localStorage</div>
+              <div><span style="color:var(--tx3)">想定形式:</span> <code>https://script.google.com/macros/s/.../exec</code></div>
+            </div>
+          </div>
+          <div class="modal-foot" style="flex-wrap:wrap">
+            <button class="btn" onclick="fillEmbeddedGatewayUrl()">初期値を入力</button>
+            <button class="btn" onclick="resetGatewayToEmbedded()">初期値へ戻す</button>
+            <button class="btn" onclick="testGatewaySettingsUrl()">接続テスト</button>
+            <button class="btn" onclick="closeGatewaySettingsModal()">閉じる</button>
+            <button class="btn btn-p" onclick="saveGatewaySettingsUrl()">💾 保存</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(wrapper.firstElementChild);
+  }
+
+  function refreshGatewayUi() {
+    const chip = document.getElementById("gateway-current-chip");
+    const effective = getEffectiveGatewayUrl();
+    const saved = getSavedGatewayUrl();
+
+    if (chip) {
+      chip.textContent = "GAS: " + gatewayShortLabel(effective);
+      chip.classList.remove("ok", "warn");
+      chip.classList.add(effective ? "ok" : "warn");
+      chip.title = effective || "未設定";
+    }
+
+    const effectiveView = document.getElementById("gateway-effective-url-view");
+    const defaultView = document.getElementById("gateway-default-url-view");
+    const input = document.getElementById("gateway-url-input");
+
+    if (effectiveView) effectiveView.textContent = effective || "未設定";
+    if (defaultView) defaultView.textContent = EMBEDDED_GATEWAY_URL || "未設定";
+    if (input && document.getElementById("gatewayModal")?.classList.contains("on")) {
+      input.value = saved || effective || "";
+    }
+  }
+
+  window.openGatewaySettingsModal = function () {
+    ensureGatewayModal();
+    const input = document.getElementById("gateway-url-input");
+    const saved = getSavedGatewayUrl();
+    if (input) input.value = saved || getEffectiveGatewayUrl() || "";
+    refreshGatewayUi();
+    document.getElementById("gatewayModal").classList.add("on");
+  };
+
+  window.closeGatewaySettingsModal = function () {
+    const modal = document.getElementById("gatewayModal");
+    if (modal) modal.classList.remove("on");
+  };
+
+  window.fillEmbeddedGatewayUrl = function () {
+    const input = document.getElementById("gateway-url-input");
+    if (input) input.value = EMBEDDED_GATEWAY_URL || "";
+  };
+
+  window.resetGatewayToEmbedded = async function () {
+    clearSavedGatewayUrl();
+    refreshGatewayUi();
+    closeGatewaySettingsModal();
+    if (typeof setLed === "function") setLed(false);
+    const ledTx = document.getElementById("ledTx");
+    if (ledTx) ledTx.textContent = "初期URLに戻しました";
+    if (typeof toast === "function") toast("保存済みURLを削除し、埋め込み初期値に戻しました", "ok");
+    dbgSafe("info", "CONFIG", "GAS URL reset to embedded default");
+
+    const listPanel = document.getElementById("panel-list");
+    if (listPanel && listPanel.classList.contains("on") && typeof loadItems === "function") {
+      await loadItems();
+    }
+  };
+
+  function isLikelyGasExecUrl(url) {
+    const v = normalizeGatewayUrl(url);
+    return /^https:\/\/script\.google\.com\/macros\/s\/.+\/exec(?:\/)?$/i.test(v);
+  }
+
+  window.testGatewaySettingsUrl = async function () {
+    const input = document.getElementById("gateway-url-input");
+    const url = normalizeGatewayUrl(input ? input.value : "");
+    if (!url) {
+      if (typeof toast === "function") toast("GASデプロイURLを入力してください", "er");
+      return;
+    }
+
+    if (!isLikelyGasExecUrl(url)) {
+      if (typeof toast === "function") toast("URL形式を確認してください", "er");
+      return;
+    }
+
+    try {
+      const d = await _jsonp({ action: "ping" }, url);
+      if (d && d.ok === true) {
+        if (typeof toast === "function") toast("接続テスト成功", "ok");
+        dbgSafe("ok", "PING", "Gateway test success: " + gatewayShortLabel(url));
+      } else {
+        throw new Error("応答形式が不正です");
+      }
+    } catch (e) {
+      if (typeof toast === "function") toast("接続テスト失敗: " + e.message, "er");
+      dbgSafe("err", "PING", "Gateway test failed: " + e.message);
+    }
+  };
+
+  window.saveGatewaySettingsUrl = async function () {
+    const input = document.getElementById("gateway-url-input");
+    const url = normalizeGatewayUrl(input ? input.value : "");
+
+    if (!url) {
+      if (typeof toast === "function") toast("GASデプロイURLを入力してください", "er");
+      return;
+    }
+
+    if (!isLikelyGasExecUrl(url)) {
+      if (typeof toast === "function") toast("GASデプロイURLの形式を確認してください", "er");
+      return;
+    }
+
+    setSavedGatewayUrl(url);
+    refreshGatewayUi();
+    closeGatewaySettingsModal();
+
+    if (typeof setLed === "function") setLed(false);
+    const ledTx = document.getElementById("ledTx");
+    if (ledTx) ledTx.textContent = "接続先変更済";
+
+    if (typeof toast === "function") toast("GASデプロイURLを保存しました", "ok");
+    dbgSafe("info", "CONFIG", "GAS URL saved: " + gatewayShortLabel(url));
+
+    const listPanel = document.getElementById("panel-list");
+    if (listPanel && listPanel.classList.contains("on") && typeof loadItems === "function") {
+      await loadItems();
+    }
+  };
+
+  /* ---------------------------------------------------------
+     既存関数を「追記で上書き」
+     実通信時は保存済みURLを優先
+     --------------------------------------------------------- */
+
+  function _jsonp(params, overrideGatewayUrl = "") {
+    return new Promise((resolve, reject) => {
+      const gateway = normalizeGatewayUrl(overrideGatewayUrl || getEffectiveGatewayUrl());
+
+      if (!gateway) {
+        const msg = "GASデプロイURLが未設定です";
+        dbgSafe("err", "CONFIG", msg);
+        reject(new Error(msg));
+        return;
+      }
+
+      const cbName = "_gcb" + Date.now() + Math.floor(Math.random() * 9999);
+      const qs = Object.entries({ ...params, callback: cbName })
+        .map(([k, v]) => k + "=" + encodeURIComponent(
+          typeof v === "object" ? JSON.stringify(v) : String(v)
+        ))
+        .join("&");
+
+      const url = gateway + (gateway.includes("?") ? "&" : "?") + qs;
+
+      dbgSafe("info", "JSONP", `action=${params.action} → ${url.slice(0, 80)}…`);
+
+      let script = null;
+      const timeout = setTimeout(() => {
+        delete window[cbName];
+        if (script && script.parentNode) script.remove();
+        const msg = "GAS timeout（30秒）— GASが応答しませんでした";
+        dbgSafe("err", "TIMEOUT", msg);
+        reject(new Error(msg));
+      }, 30000);
+
+      window[cbName] = (data) => {
+        clearTimeout(timeout);
+        delete window[cbName];
+        if (script && script.parentNode) script.remove();
+
+        if (data && data.ok === false) {
+          dbgSafe("err", "GAS ERR", JSON.stringify(data.error));
+          reject(new Error(data.error || "GAS error"));
+        } else {
+          const cnt = data && data.results ? data.results.length : "—";
+          dbgSafe("ok", "JSONP OK", `action=${params.action} count=${cnt}`);
+          resolve(data);
+        }
+      };
+
+      script = document.createElement("script");
+      script.src = url;
+      script.onerror = () => {
+        clearTimeout(timeout);
+        delete window[cbName];
+        if (script && script.parentNode) script.remove();
+        const msg = "scriptタグ読み込みエラー — GAS URLが不正 or デプロイ未完了の可能性";
+        dbgSafe("err", "SCRIPT ERR", msg + " | url=" + url.slice(0, 100));
+        reject(new Error(msg));
+      };
+
+      document.head.appendChild(script);
+      dbgSafe("info", "SCRIPT", "scriptタグ挿入: " + url.slice(0, 80));
+    });
+  }
+
+  async function gasPing(overrideGatewayUrl = "") {
+    try {
+      const d = await _jsonp({ action: "ping" }, overrideGatewayUrl);
+      return d && d.ok === true;
+    } catch {
+      return false;
+    }
+  }
+
+  async function notionPost(path, body) {
+    if (!getEffectiveGatewayUrl()) return _claudeFallback("POST", path, body);
+    return _gasRelay("POST", path, body);
+  }
+
+  async function notionPatch(path, body) {
+    if (!getEffectiveGatewayUrl()) return _claudeFallback("PATCH", path, body);
+    return _gasRelay("PATCH", path, body);
+  }
+
+  async function notionGet(path) {
+    if (!getEffectiveGatewayUrl()) return _claudeFallback("GET", path, null);
+    return _gasRelay("GET", path, null);
+  }
+
+  async function notionQueryAll(dbId) {
+    if (getEffectiveGatewayUrl()) return _gasQueryAll(dbId);
+    return _claudeQueryAll(dbId);
+  }
+
+  /* runPingTest だけ有効URL表示に差し替え */
+  if (typeof runPingTest === "function") {
+    window.runPingTest = async function () {
+      dbgSafe("info", "TEST", "─── Ping テスト開始 ───");
+      dbgSafe("info", "TEST", `EFFECTIVE_GATEWAY_URL = ${getEffectiveGatewayUrl() || "（未設定）"}`);
+      try {
+        const d = await _jsonp({ action: "ping" });
+        dbgSafe("ok", "PING", `成功: ${JSON.stringify(d)}`);
+      } catch (e) {
+        dbgSafe("err", "PING", `失敗: ${e.message}`);
+      }
+    };
+  }
+
+  /* loadItemsの前に現在URLを1行だけ補足表示 */
+  if (typeof loadItems === "function") {
+    const _originalLoadItems = loadItems;
+    window.loadItems = async function () {
+      dbgSafe("info", "CONFIG", `有効GAS URL = ${getEffectiveGatewayUrl() ? gatewayShortLabel(getEffectiveGatewayUrl()) : "未設定"}`);
+      return _originalLoadItems.apply(this, arguments);
+    };
+  }
+
+  function initGatewayAppendPatch() {
+    ensureGatewayStyles();
+    ensureGatewayTopbarUi();
+    ensureGatewayModal();
+    refreshGatewayUi();
+    dbgSafe("info", "CONFIG", `Gateway settings patch ready: ${gatewayShortLabel(getEffectiveGatewayUrl())}`);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initGatewayAppendPatch);
+  } else {
+    initGatewayAppendPatch();
+  }
+})();
+</script>
+
+</body>
+</html>
